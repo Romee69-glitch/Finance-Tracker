@@ -715,9 +715,11 @@
     var totalReserved = Object.values(state.reserves).reduce(function(s,v){return s+v;},0);
     var cashShortfall = totalReserved - state.cashInHand;
     var payablesTotalCheck = state.payables.reduce(function(s,p){ return s + Math.max(0, p.balance); }, 0);
-    var totalLoansPayable = computeLoanBalance() + payablesTotalCheck;
+    var linkedEmiItem = state.fixed.find(function(f){ return f.id === state.loan.linkedItemId; });
+    var currentEmiInstallmentDue = linkedEmiItem ? Number(linkedEmiItem.amount) : 0;
+    var totalLoansPayable = currentEmiInstallmentDue + payablesTotalCheck;
     if(totalLoansPayable > 0 && state.cashInHand < totalLoansPayable){
-      alerts.push({level:'warn', text:'Cash in hand (' + fmt(state.cashInHand) + ') is below what you owe (' + fmt(totalLoansPayable) + ') in EMI and loans taken. Your liquid cash may not fully cover these if they came due on demand.'});
+      alerts.push({level:'warn', text:'Cash in hand (' + fmt(state.cashInHand) + ') is below what you owe (' + fmt(totalLoansPayable) + ') — this cycle\'s EMI installment plus loans taken. Your liquid cash may not fully cover these if they came due on demand.'});
     }
     if(cashShortfall > 0){
       alerts.push({level:'danger', text:'Reserves (' + fmt(totalReserved) + ') exceed actual cash by ' + fmt(cashShortfall) + ' — the earmarked money is not really there yet. Update cash-in-hand when it is.'});
