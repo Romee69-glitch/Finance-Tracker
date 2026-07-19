@@ -168,7 +168,8 @@
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
       <input type="text" id="newIncomeReceivableSource" placeholder="Source (e.g. ProFiler Tax - client name)" style="flex:1;min-width:160px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
       <input type="number" id="newIncomeReceivableAmount" placeholder="Amount earned" style="width:130px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
-      <input type="date" id="newIncomeReceivableDate" style="height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <input type="date" id="newIncomeReceivableDate" title="Date earned" style="height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <input type="date" id="newIncomeReceivableDueDate" title="Expected payment date (optional)" style="height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
       <button class="btn" id="addIncomeReceivableBtn" style="height:34px;padding:0 14px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:13px;">Log income earned</button>
     </div>
     <div style="font-size:11px;color:var(--ink-3);margin-top:6px;">Counts as income in your P&L the moment you log it (accrual basis) — doesn't wait for cash. When the client actually pays, log the payment received below to move it from receivable to cash, without counting as income twice.</div>
@@ -713,6 +714,11 @@
 
     var totalReserved = Object.values(state.reserves).reduce(function(s,v){return s+v;},0);
     var cashShortfall = totalReserved - state.cashInHand;
+    var payablesTotalCheck = state.payables.reduce(function(s,p){ return s + Math.max(0, p.balance); }, 0);
+    var totalLoansPayable = computeLoanBalance() + payablesTotalCheck;
+    if(totalLoansPayable > 0 && state.cashInHand < totalLoansPayable){
+      alerts.push({level:'warn', text:'Cash in hand (' + fmt(state.cashInHand) + ') is below what you owe (' + fmt(totalLoansPayable) + ') in EMI and loans taken. Your liquid cash may not fully cover these if they came due on demand.'});
+    }
     if(cashShortfall > 0){
       alerts.push({level:'danger', text:'Reserves (' + fmt(totalReserved) + ') exceed actual cash by ' + fmt(cashShortfall) + ' — the earmarked money is not really there yet. Update cash-in-hand when it is.'});
     }
@@ -760,6 +766,40 @@
           alerts.push({level:'warn', text:'At the current pace, ' + i.name + ' runs out around day ' + runsOutDay + ' of ' + state.cycleLengthDays + ' — ' + tip + '.'});
         } else {
           alerts.push({level:'warn', text:i.name + ' is running ' + fmt(i.paceDelta) + ' ahead of pace — ' + tip + '.'});
+        }
+      }
+    });
+
+    state.receivables.forEach(function(r){
+      if(r.balance > 0 && r.dueDate){
+        var daysOver = Math.floor((today - new Date(r.dueDate)) / (1000*60*60*24));
+        if(daysOver > 0){
+          alerts.push({level:'warn', text: r.personName + ' still owes ' + fmt(r.balance) + ' — was due ' + r.dueDate + ', ' + daysOver + ' days overdue.'});
+        }
+      }
+    });
+
+    state.payables.forEach(function(p){
+      if(p.balance > 0 && p.dueDate){
+        var daysOver = Math.floor((today - new Date(p.dueDate)) / (1000*60*60*24));
+        if(daysOver > 0){
+          alerts.push({level:'warn', text: 'You still owe ' + p.personName + ' ' + fmt(p.balance) + ' — was due ' + p.dueDate + ', ' + daysOver + ' days overdue.'});
+        }
+      }
+    });
+
+    state.incomeReceivables.forEach(function(ir){
+      if(ir.balance > 0){
+        if(ir.dueDate){
+          var daysOver = Math.floor((today - new Date(ir.dueDate)) / (1000*60*60*24));
+          if(daysOver > 0){
+            alerts.push({level:'warn', text: fmt(ir.balance) + ' from ' + ir.source + ' is overdue — expected ' + ir.dueDate + ', ' + daysOver + ' days ago. Consider following up.'});
+          }
+        } else {
+          var daysSinceEarned = Math.floor((today - new Date(ir.dateEarned)) / (1000*60*60*24));
+          if(daysSinceEarned >= 30){
+            alerts.push({level:'info', text: fmt(ir.balance) + ' from ' + ir.source + ' has been pending ' + daysSinceEarned + ' days with no expected date set.'});
+          }
         }
       }
     });
@@ -1149,7 +1189,7 @@
       balLine.textContent = fmt(ir.balance) + (ir.balance <= 0 ? ' — fully received' : ' pending');
       var subLine = document.createElement('div');
       subLine.style.fontSize='12px'; subLine.style.color='var(--ink-2)';
-      subLine.textContent = 'Earned ' + ir.dateEarned;
+      subLine.textContent = 'Earned ' + ir.dateEarned + (ir.dueDate ? ' · expected ' + ir.dueDate : '');
       block.appendChild(head); block.appendChild(balLine); block.appendChild(subLine);
       if(ir.balance > 0){
         var repayRow = document.createElement('div');
@@ -1933,15 +1973,17 @@
     var source = document.getElementById('newIncomeReceivableSource').value.trim();
     var amount = parseFloat(document.getElementById('newIncomeReceivableAmount').value);
     var dateEarned = document.getElementById('newIncomeReceivableDate').value || new Date().toISOString().slice(0,10);
+    var dueDate = document.getElementById('newIncomeReceivableDueDate').value || null;
     if(!source || isNaN(amount) || amount <= 0) return;
     var irId = genId();
-    state.incomeReceivables.push({id:irId, source:source, balance:0, dateEarned:dateEarned});
+    state.incomeReceivables.push({id:irId, source:source, balance:0, dateEarned:dateEarned, dueDate:dueDate});
     var tx = {id:genId(), date:dateEarned, type:'income_accrual', category:source + ' (earned, pending)', categoryId:'income-receivable', incomeReceivableId:irId, incomeReceivableAction:'earned', amount:amount, source:'manual'};
     applyForward(tx);
     state.transactions.push(tx);
     document.getElementById('newIncomeReceivableSource').value = '';
     document.getElementById('newIncomeReceivableAmount').value = '';
     document.getElementById('newIncomeReceivableDate').value = '';
+    document.getElementById('newIncomeReceivableDueDate').value = '';
     save(); render();
   };
 
