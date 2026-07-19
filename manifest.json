@@ -1,6 +1,6 @@
 {
-  "name": "Monthly Ledger",
-  "short_name": "Ledger",
+  "name": "Personal Finance Tracker",
+  "short_name": "Finance",
   "description": "Daily budget and cash tracker",
   "start_url": "./index.html",
   "scope": "./",

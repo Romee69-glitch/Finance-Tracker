@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Monthly Ledger</title>
+<title>Personal Finance Tracker</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="theme-color" content="#1C2B2F">
+<meta name="theme-color" content="#191919">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Ledger">
+<meta name="apple-mobile-web-app-title" content="Finance">
 <meta name="mobile-web-app-capable" content="yes">
 <style>
-  html, body { margin: 0; padding: 0; background: #F0EAD9; }
+  html, body { margin: 0; padding: 0; background: #FFFFFF; }
   body { padding: 16px; box-sizing: border-box; }
   * { box-sizing: border-box; }
 </style>
@@ -69,36 +69,62 @@
 </script>
 
 <style>
-  .ledger { font-family: Georgia, 'Source Serif 4', serif; color: var(--text-primary, #1C2B2F); }
-  .mono { font-family: 'IBM Plex Mono', 'Courier New', monospace; }
-  .card { background: var(--surface-2, #fff); border: 1px solid var(--border, #ddd8ca); border-radius: 10px; padding: 1rem 1.25rem; }
-  .row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.06); }
+  .ledger {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--page);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .theme-minimal {
+    --page: #FFFFFF; --surface: #FFFFFF; --ink: #191919; --ink-2: #6E6E6E; --ink-3: #9A9A9A;
+    --line: #ECECEC; --line-2: #D4D4D4;
+    --hero-bg: #F5F5F3; --hero-tx: #191919;
+    --ok-bg: #EFF7F0; --ok-tx: #2F855A; --warn-bg: #FBF3E4; --warn-tx: #9C6B1F; --bad-bg: #FBEDED; --bad-tx: #C53030;
+    --money-in: #2F855A; --money-out: #C53030; --neutral-tx: #8A6D3B;
+    --bar-ok: #6DAF7E; --bar-warn: #E2A94F; --bar-bad: #DD6B5B;
+  }
+  .theme-dark {
+    --page: #16181D; --surface: #22252C; --ink: #E8E6E1; --ink-2: #A5A7AD; --ink-3: #7C7E85;
+    --line: #32353D; --line-2: #4A4D56;
+    --hero-bg: #22252C; --hero-tx: #F0EEE9;
+    --ok-bg: #1D2B22; --ok-tx: #97C459; --warn-bg: #2E2618; --warn-tx: #EDBB65; --bad-bg: #2E1B1B; --bad-tx: #F09595;
+    --money-in: #7EC98F; --money-out: #F09595; --neutral-tx: #D2A96A;
+    --bar-ok: #6DAF7E; --bar-warn: #E2A94F; --bar-bad: #DD6B5B;
+  }
+  .mono { font-family: 'SF Mono', 'Cascadia Mono', Consolas, 'Courier New', monospace; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.25rem; }
+  .row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
   .row:last-child { border-bottom: none; }
-  input[type=number], input[type=text], input[type=date], select { font-family: inherit; }
+  input[type=number], input[type=text], input[type=date], select { font-family: inherit; background: var(--surface); color: var(--ink); }
+  input::placeholder { color: var(--ink-3); }
+  button { color: var(--ink); }
   .btn { cursor: pointer; }
   .tag { font-size: 11px; padding: 2px 8px; border-radius: 20px; }
-  ::selection { background: #A6752C33; }
 </style>
-<div class="ledger" style="max-width:720px;">
+<div class="ledger theme-minimal" id="ledgerRoot" style="max-width:720px;">
 
   <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:0.25rem;">
-    <h1 style="margin:0;font-weight:500;">Monthly ledger</h1>
-    <span id="monthLabel" style="font-size:13px;color:var(--text-secondary,#6b6a63);"></span>
+    <h1 style="margin:0;font-weight:500;">Personal Finance Tracker</h1>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span id="monthLabel" style="font-size:13px;color:var(--ink-2);"></span>
+      <button class="btn" id="themeToggle" style="height:26px;padding:0 12px;border:1px solid var(--line-2);border-radius:20px;background:transparent;font-size:12px;color:var(--ink-2);">Dark</button>
+    </div>
   </div>
-  <div id="saveStatus" style="font-size:12px;color:var(--text-muted,#999);margin-bottom:0.5rem;"></div>
-  <p style="font-size:13px;color:var(--text-secondary,#6b6a63);margin:0 0 1.25rem;">Your day-to-day cash position, fixed bills, and earmarked reserves.</p>
+  <div id="saveStatus" style="font-size:12px;color:var(--ink-3);margin-bottom:0.5rem;"></div>
+  <p style="font-size:13px;color:var(--ink-2);margin:0 0 1.25rem;">Your day-to-day cash position, fixed bills, and earmarked reserves.</p>
 
   <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:1.25rem;">
-    <div class="card" style="background:#1C2B2F;color:#F0EAD9;border:none;">
+    <div class="card" style="background:var(--hero-bg);color:var(--hero-tx);border:1px solid var(--line);">
       <div style="font-size:12px;opacity:0.75;">Cash in hand</div>
       <div class="mono" id="cashDisplay" style="font-size:22px;margin-top:2px;">—</div>
     </div>
     <div class="card">
-      <div style="font-size:12px;color:var(--text-secondary,#6b6a63);">Spendable (after reserves)</div>
+      <div style="font-size:12px;color:var(--ink-2);">Spendable (after reserves)</div>
       <div class="mono" id="spendableDisplay" style="font-size:22px;margin-top:2px;">—</div>
     </div>
     <div class="card">
-      <div style="font-size:12px;color:var(--text-secondary,#6b6a63);">Projected after this month's bills</div>
+      <div style="font-size:12px;color:var(--ink-2);">Projected after this month's bills</div>
       <div class="mono" id="projectedDisplay" style="font-size:22px;margin-top:2px;">—</div>
     </div>
   </div>
@@ -106,17 +132,18 @@
   <div class="card" style="margin-bottom:1.25rem;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
       <strong style="font-size:15px;">Credit card</strong>
-      <span style="font-size:12px;color:var(--text-secondary,#6b6a63);">Statement closes 10th · due 30th</span>
+      <span style="font-size:12px;color:var(--ink-2);">Statement closes 10th · due 30th</span>
     </div>
     <div id="ccStatus" style="font-size:13px;margin-bottom:8px;"></div>
     <div style="display:flex;gap:16px;align-items:center;">
       <div>
-        <div style="font-size:11px;color:var(--text-secondary,#6b6a63);">Outstanding payable</div>
+        <div style="font-size:11px;color:var(--ink-2);">Outstanding payable</div>
         <div class="mono" id="ccPayableDisplay" style="font-size:18px;">—</div>
       </div>
-      <button class="btn" id="payCcBtn" style="height:34px;padding:0 14px;border:1px solid #1C2B2F;border-radius:6px;background:transparent;font-size:13px;">Pay credit card bill</button>
+      <button class="btn" id="payCcBtn" style="height:34px;padding:0 14px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:13px;">Pay credit card bill</button>
+      <button class="btn" id="resetCcBtn" style="height:34px;padding:0 12px;border:1px solid var(--line);border-radius:6px;background:transparent;font-size:12px;color:var(--ink-2);">Reset balance</button>
     </div>
-    <div style="font-size:11px;color:var(--text-muted,#999);margin-top:6px;">Items tagged "credit card" accrue here when ticked — cash isn't deducted until you tap "Pay credit card bill."</div>
+    <div style="font-size:11px;color:var(--ink-3);margin-top:6px;">Items tagged "credit card" accrue here when ticked — cash isn't deducted until you tap "Pay credit card bill."</div>
   </div>
 
   <div class="card" style="margin-bottom:1rem;">
@@ -125,30 +152,30 @@
     </div>
     <div id="salaryStatus" style="font-size:13px;margin-bottom:8px;"></div>
     <div style="display:flex;gap:8px;align-items:center;">
-      <label style="font-size:12px;color:var(--text-secondary,#6b6a63);">Monthly amount</label>
-      <input type="number" id="incomeAmountInput" style="width:120px;height:32px;padding:0 8px;border:1px solid var(--border,#ddd8ca);border-radius:6px;font-size:13px;">
-      <button class="btn" id="saveIncomeBtn" style="height:32px;padding:0 12px;border:1px solid var(--border-strong,#bbb);border-radius:6px;background:transparent;font-size:12px;">Save amount</button>
-      <button class="btn" id="logSalaryBtn" style="height:32px;padding:0 12px;border:1px solid #1C2B2F;border-radius:6px;background:transparent;font-size:12px;">Log salary received</button>
+      <label style="font-size:12px;color:var(--ink-2);">Monthly amount</label>
+      <input type="number" id="incomeAmountInput" style="width:120px;height:32px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <button class="btn" id="saveIncomeBtn" style="height:32px;padding:0 12px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:12px;">Save amount</button>
+      <button class="btn" id="logSalaryBtn" style="height:32px;padding:0 12px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:12px;">Log salary received</button>
     </div>
   </div>
 
   <div class="card" style="margin-bottom:1.25rem;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
       <strong style="font-size:15px;">Today's pace</strong>
-      <span id="todayLabel" style="font-size:12px;color:var(--text-secondary,#6b6a63);"></span>
+      <span id="todayLabel" style="font-size:12px;color:var(--ink-2);"></span>
     </div>
     <div id="paceBanner" style="font-size:14px;padding:8px 12px;border-radius:6px;margin-bottom:10px;"></div>
     <div style="display:flex;gap:16px;margin-bottom:10px;">
       <div>
-        <div style="font-size:11px;color:var(--text-secondary,#6b6a63);">Spent today</div>
+        <div style="font-size:11px;color:var(--ink-2);">Spent today</div>
         <div class="mono" id="spentTodayDisplay" style="font-size:16px;">—</div>
       </div>
       <div>
-        <div style="font-size:11px;color:var(--text-secondary,#6b6a63);">Spent this cycle</div>
+        <div style="font-size:11px;color:var(--ink-2);">Spent this cycle</div>
         <div class="mono" id="spentCycleDisplay" style="font-size:16px;">—</div>
       </div>
       <div>
-        <div style="font-size:11px;color:var(--text-secondary,#6b6a63);">Expected by today</div>
+        <div style="font-size:11px;color:var(--ink-2);">Expected by today</div>
         <div class="mono" id="expectedCycleDisplay" style="font-size:16px;">—</div>
       </div>
     </div>
@@ -157,17 +184,18 @@
 
   <div class="card" id="insightsCard" style="margin-bottom:1.25rem;">
     <div id="insightsBanner" style="font-size:14px;padding:8px 12px;border-radius:6px;margin-bottom:10px;"></div>
+    <div id="alertsList" style="margin-bottom:10px;"></div>
     <div id="insightsList"></div>
   </div>
 
   <div class="card" style="margin-bottom:1rem;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
       <strong style="font-size:15px;">Cash in hand</strong>
-      <span style="font-size:12px;color:var(--text-secondary,#6b6a63);">update whenever you check your actual balance</span>
+      <span style="font-size:12px;color:var(--ink-2);">update whenever you check your actual balance</span>
     </div>
     <div style="display:flex;gap:8px;">
-      <input type="number" id="cashInput" placeholder="Current cash in hand (PKR)" style="flex:1;height:36px;padding:0 10px;border:1px solid var(--border,#ddd8ca);border-radius:6px;">
-      <button class="btn" id="setCashBtn" style="height:36px;padding:0 16px;border:1px solid #1C2B2F;border-radius:6px;background:transparent;">Set</button>
+      <input type="number" id="cashInput" placeholder="Current cash in hand (PKR)" style="flex:1;height:36px;padding:0 10px;border:1px solid var(--line);border-radius:6px;">
+      <button class="btn" id="setCashBtn" style="height:36px;padding:0 16px;border:1px solid var(--line-2);border-radius:6px;background:transparent;">Set</button>
     </div>
   </div>
 
@@ -175,20 +203,20 @@
     <strong style="font-size:15px;">This month's fixed items</strong>
     <div id="fixedList" style="margin-top:8px;"></div>
     <div style="display:flex;gap:8px;margin-top:10px;">
-      <input type="text" id="newFixedName" placeholder="Item name" style="flex:2;height:34px;padding:0 8px;border:1px solid var(--border,#ddd8ca);border-radius:6px;font-size:13px;">
-      <input type="number" id="newFixedAmt" placeholder="Amount" style="flex:1;height:34px;padding:0 8px;border:1px solid var(--border,#ddd8ca);border-radius:6px;font-size:13px;">
-      <input type="number" id="newFixedDueDay" placeholder="Due day (opt.)" min="1" max="31" style="width:110px;height:34px;padding:0 8px;border:1px solid var(--border,#ddd8ca);border-radius:6px;font-size:13px;">
-      <select id="newFixedType" style="height:34px;border:1px solid var(--border,#ddd8ca);border-radius:6px;font-size:13px;">
+      <input type="text" id="newFixedName" placeholder="Item name" style="flex:2;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <input type="number" id="newFixedAmt" placeholder="Amount" style="flex:1;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <input type="number" id="newFixedDueDay" placeholder="Due day (opt.)" min="1" max="31" style="width:110px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <select id="newFixedType" style="height:34px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
         <option value="expense">Expense</option>
         <option value="reserve">Reserve contribution</option>
       </select>
-      <select id="newFixedPaymentMethod" style="height:34px;border:1px solid var(--border,#ddd8ca);border-radius:6px;font-size:13px;">
+      <select id="newFixedPaymentMethod" style="height:34px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
         <option value="cash">Cash / bank</option>
         <option value="credit_card">Credit card</option>
       </select>
-      <button class="btn" id="addFixedBtn" style="height:34px;padding:0 14px;border:1px solid var(--border-strong,#bbb);border-radius:6px;background:transparent;font-size:13px;">Add</button>
+      <button class="btn" id="addFixedBtn" style="height:34px;padding:0 14px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:13px;">Add</button>
     </div>
-    <button class="btn" id="newMonthBtn" style="margin-top:10px;height:32px;padding:0 12px;border:1px solid var(--border,#ddd8ca);border-radius:6px;background:transparent;font-size:12px;color:var(--text-secondary,#6b6a63);">Start new month (reset paid status)</button>
+    <button class="btn" id="newMonthBtn" style="margin-top:10px;height:32px;padding:0 12px;border:1px solid var(--line);border-radius:6px;background:transparent;font-size:12px;color:var(--ink-2);">Start new month (reset paid status)</button>
   </div>
 
   <div class="card" style="margin-bottom:1rem;">
@@ -196,11 +224,11 @@
     <div id="reserveList" style="margin-top:8px;"></div>
     <div id="deadlineList" style="margin-top:4px;"></div>
     <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;">
-      <input type="text" id="newDeadlineName" placeholder="Deadline name (e.g. Car token tax)" style="flex:1;min-width:140px;height:30px;padding:0 8px;border:1px solid var(--border,#ddd8ca);border-radius:6px;font-size:13px;">
-      <input type="date" id="newDeadlineDate" style="height:30px;padding:0 8px;border:1px solid var(--border,#ddd8ca);border-radius:6px;font-size:13px;">
-      <input type="number" id="newDeadlineAmount" placeholder="Target amount" style="width:110px;height:30px;padding:0 8px;border:1px solid var(--border,#ddd8ca);border-radius:6px;font-size:13px;">
-      <select id="newDeadlineReserve" style="height:30px;border:1px solid var(--border,#ddd8ca);border-radius:6px;font-size:13px;"></select>
-      <button class="btn" id="addDeadlineBtn" style="height:30px;padding:0 12px;border:1px solid var(--border-strong,#bbb);border-radius:6px;background:transparent;font-size:12px;">Add deadline</button>
+      <input type="text" id="newDeadlineName" placeholder="Deadline name (e.g. Car token tax)" style="flex:1;min-width:140px;height:30px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <input type="date" id="newDeadlineDate" style="height:30px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <input type="number" id="newDeadlineAmount" placeholder="Target amount" style="width:110px;height:30px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <select id="newDeadlineReserve" style="height:30px;border:1px solid var(--line);border-radius:6px;font-size:13px;"></select>
+      <button class="btn" id="addDeadlineBtn" style="height:30px;padding:0 12px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:12px;">Add deadline</button>
     </div>
   </div>
 
@@ -209,26 +237,26 @@
       <strong style="font-size:15px;">Log a transaction</strong>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;">
-      <input type="date" id="txDate" style="height:34px;padding:0 8px;border:1px solid var(--border,#ddd8ca);border-radius:6px;font-size:13px;">
-      <select id="txType" style="height:34px;border:1px solid var(--border,#ddd8ca);border-radius:6px;font-size:13px;">
+      <input type="date" id="txDate" style="height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <select id="txType" style="height:34px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
         <option value="expense">Expense</option>
         <option value="income">Income</option>
       </select>
-      <select id="txCategorySelect" style="flex:1;min-width:140px;height:34px;border:1px solid var(--border,#ddd8ca);border-radius:6px;font-size:13px;"></select>
-      <input type="text" id="txNote" placeholder="Note (optional, e.g. mobile cover)" style="flex:1;min-width:140px;height:34px;padding:0 8px;border:1px solid var(--border,#ddd8ca);border-radius:6px;font-size:13px;">
-      <input type="number" id="txAmount" placeholder="Amount" style="width:110px;height:34px;padding:0 8px;border:1px solid var(--border,#ddd8ca);border-radius:6px;font-size:13px;">
-      <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-secondary,#6b6a63);"><input type="checkbox" id="txCreditCard"> Charge to credit card</label>
-      <button class="btn" id="addTxBtn" style="height:34px;padding:0 14px;border:1px solid #1C2B2F;border-radius:6px;background:transparent;font-size:13px;">Log</button>
+      <select id="txCategorySelect" style="flex:1;min-width:140px;height:34px;border:1px solid var(--line);border-radius:6px;font-size:13px;"></select>
+      <input type="text" id="txNote" placeholder="Note (optional, e.g. mobile cover)" style="flex:1;min-width:140px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <input type="number" id="txAmount" placeholder="Amount" style="width:110px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-2);"><input type="checkbox" id="txCreditCard"> Charge to credit card</label>
+      <button class="btn" id="addTxBtn" style="height:34px;padding:0 14px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:13px;">Log</button>
     </div>
-    <div style="font-size:11px;color:var(--text-muted,#999);margin-top:6px;">Pick the budget line this belongs to. Choose "Other / uncategorized" for one-off purchases (like a phone cover) that shouldn't count against a recurring budget. To pay an actual bill from a reserve fund (oil change, ACCA fee), select that reserve item here as an expense. Tick "Charge to credit card" if this is going on the card rather than paid from cash right now.</div>
+    <div style="font-size:11px;color:var(--ink-3);margin-top:6px;">Pick the budget line this belongs to. Choose "Other / uncategorized" for one-off purchases (like a phone cover) that shouldn't count against a recurring budget. To pay an actual bill from a reserve fund (oil change, ACCA fee), select that reserve item here as an expense. Tick "Charge to credit card" if this is going on the card rather than paid from cash right now.</div>
   </div>
 
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <strong style="font-size:15px;">Recent transactions</strong>
       <div style="display:flex;gap:8px;">
-        <button class="btn" id="exportDataBtn" style="height:28px;padding:0 12px;border:1px solid var(--border,#ddd8ca);border-radius:6px;background:transparent;font-size:12px;color:var(--text-secondary,#6b6a63);">Export data</button>
-        <button class="btn" id="resetTxBtn" style="height:28px;padding:0 12px;border:1px solid var(--border,#ddd8ca);border-radius:6px;background:transparent;font-size:12px;color:var(--text-secondary,#6b6a63);">Reset transactions</button>
+        <button class="btn" id="exportDataBtn" style="height:28px;padding:0 12px;border:1px solid var(--line);border-radius:6px;background:transparent;font-size:12px;color:var(--ink-2);">Export data</button>
+        <button class="btn" id="resetTxBtn" style="height:28px;padding:0 12px;border:1px solid var(--line);border-radius:6px;background:transparent;font-size:12px;color:var(--ink-2);">Reset transactions</button>
       </div>
     </div>
     <div id="txList" style="margin-top:8px;max-height:260px;overflow-y:auto;"></div>
@@ -242,12 +270,12 @@
     <strong style="font-size:15px;">Savings goals</strong>
     <div id="goalsList" style="margin-top:8px;"></div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
-      <input type="text" id="newGoalName" placeholder="Goal name (e.g. iPhone 19 Pro fund)" style="flex:1;min-width:160px;height:34px;padding:0 8px;border:1px solid var(--border,#ddd8ca);border-radius:6px;font-size:13px;">
-      <input type="number" id="newGoalMonthly" placeholder="Monthly contribution" style="width:140px;height:34px;padding:0 8px;border:1px solid var(--border,#ddd8ca);border-radius:6px;font-size:13px;">
-      <input type="date" id="newGoalDate" style="height:34px;padding:0 8px;border:1px solid var(--border,#ddd8ca);border-radius:6px;font-size:13px;">
-      <button class="btn" id="addGoalBtn" style="height:34px;padding:0 14px;border:1px solid #1C2B2F;border-radius:6px;background:transparent;font-size:13px;">Add goal</button>
+      <input type="text" id="newGoalName" placeholder="Goal name (e.g. iPhone 19 Pro fund)" style="flex:1;min-width:160px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <input type="number" id="newGoalMonthly" placeholder="Monthly contribution" style="width:140px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <input type="date" id="newGoalDate" style="height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <button class="btn" id="addGoalBtn" style="height:34px;padding:0 14px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:13px;">Add goal</button>
     </div>
-    <div style="font-size:11px;color:var(--text-muted,#999);margin-top:6px;">Creates a matching monthly expense line in "This month's fixed items" — tick it (or log it) each time you actually transfer the contribution, and this card tracks your running total across all months, unaffected by "Start new month."</div>
+    <div style="font-size:11px;color:var(--ink-3);margin-top:6px;">Creates a matching monthly expense line in "This month's fixed items" — tick it (or log it) each time you actually transfer the contribution, and this card tracks your running total across all months, unaffected by "Start new month."</div>
   </div>
 
 </div>
@@ -281,6 +309,7 @@
     transactions: [],
     cycleStart: new Date().toISOString().slice(0,10),
     cycleLengthDays: 30,
+    theme: 'minimal',
     monthLabel: new Date().toLocaleString('default',{month:'long',year:'numeric'})
   };
 
@@ -308,7 +337,7 @@
     } else if(t.type === 'transfer'){
       if(t.reserveKey){ state.reserves[t.reserveKey] += Number(t.amount); }
     } else if(t.type === 'accrual'){
-      state.ccPayable += Number(t.amount);
+      if(!t.settled){ state.ccPayable += Number(t.amount); }
     }
   }
 
@@ -322,7 +351,7 @@
     } else if(t.type === 'transfer'){
       if(t.reserveKey){ state.reserves[t.reserveKey] -= Number(t.amount); }
     } else if(t.type === 'accrual'){
-      state.ccPayable -= Number(t.amount);
+      if(!t.settled){ state.ccPayable -= Number(t.amount); }
     }
   }
 
@@ -335,6 +364,7 @@
     }
     if(!state.cycleStart) state.cycleStart = new Date().toISOString().slice(0,10);
     if(!state.cycleLengthDays) state.cycleLengthDays = 30;
+    if(!state.theme) state.theme = 'minimal';
     if(!state.deadlines){
       state.deadlines = [{id:'acca-deadline', name:'ACCA fee', date: state.accaDeadline || '2026-07-27', targetAmount: state.accaFeeAmount || 82500, reserveKey:'acca'}];
     }
@@ -373,7 +403,7 @@
 
   function setSaveStatus(text, color){
     var el = document.getElementById('saveStatus');
-    if(el){ el.textContent = text; el.style.color = color || 'var(--text-muted,#999)'; }
+    if(el){ el.textContent = text; el.style.color = color || 'var(--ink-3)'; }
   }
 
   function save(){
@@ -390,15 +420,15 @@
       var result = await window.storage.set(KEY, snapshot, false);
       if(!result) throw new Error('empty result');
       saveRetryCount = 0;
-      setSaveStatus('Saved', 'var(--text-muted,#999)');
+      setSaveStatus('Saved', 'var(--ink-3)');
     } catch(e) {
       console.error('save failed', e);
       if(saveRetryCount < 3){
         saveRetryCount++;
-        setSaveStatus('Save failed, retrying…', '#A32D2D');
+        setSaveStatus('Save failed, retrying…', 'var(--bad-tx)');
         retryTimer = setTimeout(attemptSave, 1200 * saveRetryCount);
       } else {
-        setSaveStatus('Not saved — check your connection and try the last action again.', '#A32D2D');
+        setSaveStatus('Not saved — check your connection and try the last action again.', 'var(--bad-tx)');
       }
     }
   }
@@ -460,7 +490,101 @@
     return state.transactions.filter(function(t){ return (t.type==='expense' || t.type==='accrual') && t.categoryId !== 'cc-payment' && t.date===todayStr; }).reduce(function(s,t){ return s+Number(t.amount); },0);
   }
 
+  function applyTheme(){
+    var root = document.getElementById('ledgerRoot');
+    root.className = 'ledger ' + (state.theme === 'dark' ? 'theme-dark' : 'theme-minimal');
+    var tBtn = document.getElementById('themeToggle');
+    if(tBtn) tBtn.textContent = state.theme === 'dark' ? 'Light' : 'Dark';
+    try { document.body.style.background = state.theme === 'dark' ? '#16181D' : '#FFFFFF'; } catch(e){}
+  }
+
+  function computeAlerts(insights){
+    var alerts = [];
+    var today = new Date();
+
+    var totalReserved = Object.values(state.reserves).reduce(function(s,v){return s+v;},0);
+    var cashShortfall = totalReserved - state.cashInHand;
+    if(cashShortfall > 0){
+      alerts.push({level:'danger', text:'Reserves (' + fmt(totalReserved) + ') exceed actual cash by ' + fmt(cashShortfall) + ' — the earmarked money is not really there yet. Update cash-in-hand when it is.'});
+    }
+
+    var ccDue = ccNextDueDate();
+    var ccDays = Math.ceil((ccDue - today) / (1000*60*60*24));
+    if(state.ccPayable > 0 && ccDays <= 7){
+      if(spendable() < state.ccPayable){
+        alerts.push({level:'danger', text:'Card bill of ' + fmt(state.ccPayable) + ' due in ' + ccDays + ' days but spendable cash is only ' + fmt(spendable()) + ' — short by ' + fmt(state.ccPayable - spendable()) + '. Arrange funds or expect interest charges.'});
+      } else {
+        alerts.push({level:'warn', text:'Card bill of ' + fmt(state.ccPayable) + ' due in ' + ccDays + ' days — spendable covers it. Pay on time to avoid interest at your card rate.'});
+      }
+    } else if(state.ccPayable > 0 && ccDays <= 15){
+      alerts.push({level:'info', text:'Card bill of ' + fmt(state.ccPayable) + ' due in ' + ccDays + ' days. Keep that amount unallocated so it is ready.'});
+    }
+
+    state.deadlines.forEach(function(d){
+      var daysLeft = Math.ceil((new Date(d.date) - today) / (1000*60*60*24));
+      if(daysLeft < 0){
+        alerts.push({level:'info', text:d.name + ' deadline (' + d.date + ') has passed — update it to the next one so tracking stays useful.'});
+        return;
+      }
+      var fund = d.reserveKey ? (state.reserves[d.reserveKey] || 0) : 0;
+      var short = d.targetAmount - fund;
+      if(short > 0){
+        var monthsLeft = Math.max(1, daysLeft / 30.44);
+        var neededPerMonth = short / monthsLeft;
+        if(daysLeft <= 15){
+          alerts.push({level:'danger', text:d.name + ' due in ' + daysLeft + ' days and the fund is ' + fmt(short) + ' short. Too late to build it monthly — arrange ' + fmt(short) + ' directly.'});
+        } else {
+          alerts.push({level:'warn', text:d.name + ' in ' + daysLeft + ' days needs ' + fmt(short) + ' more. Set aside about ' + fmt(neededPerMonth) + '/month from here to make it.'});
+        }
+      }
+    });
+
+    insights.forEach(function(i){
+      if(i.budget <= 0) return;
+      if(i.remaining < 0){
+        alerts.push({level:'danger', text:i.name + ' is ' + fmt(Math.abs(i.remaining)) + ' over budget with ' + daysRemaining() + ' days still left. Further spend here comes straight out of your surplus.'});
+      } else if(i.paceDelta > 0 && i.paceDelta > i.budget * 0.1 && i.dailyAllowance > 0){
+        var burnPerDay = i.spent / Math.max(1, daysElapsed()+1);
+        var runsOutDay = burnPerDay > 0 ? Math.round(i.budget / burnPerDay) : null;
+        var tip = 'keep to about ' + fmt(i.dailyAllowance) + '/day to finish inside budget';
+        if(runsOutDay && runsOutDay < state.cycleLengthDays){
+          alerts.push({level:'warn', text:'At the current pace, ' + i.name + ' runs out around day ' + runsOutDay + ' of ' + state.cycleLengthDays + ' — ' + tip + '.'});
+        } else {
+          alerts.push({level:'warn', text:i.name + ' is running ' + fmt(i.paceDelta) + ' ahead of pace — ' + tip + '.'});
+        }
+      }
+    });
+
+    var doubleCounted = insights.filter(function(i){ return i.possibleDouble; });
+    if(doubleCounted.length > 0){
+      alerts.push({level:'warn', text:'Possible double-counting on ' + doubleCounted.map(function(i){return i.name;}).join(', ') + ' — both a lump-sum tick and individual entries exist this cycle, so numbers may be overstated.'});
+    }
+
+    if(!state.salaryReceivedThisCycle){
+      var pendingBills = remainingFixedExpenses() + state.ccPayable;
+      if(pendingBills > state.cashInHand){
+        alerts.push({level:'warn', text:'Salary is not logged yet and pending obligations (' + fmt(pendingBills) + ') exceed cash on hand (' + fmt(state.cashInHand) + '). Watch payment timing until it lands.'});
+      }
+    }
+
+    if((daysElapsed()+1) > state.cycleLengthDays){
+      alerts.push({level:'info', text:'This cycle has run past ' + state.cycleLengthDays + ' days — tap "Start new month" so pace and budgets track correctly.'});
+    }
+
+    var proj = projected();
+    if(proj > 0){
+      alerts.push({level:'ok', text:'On the current plan you end the cycle with about ' + fmt(proj) + ' after all bills and reserves. Consider directing it to goals or investments before it absorbs into spending.'});
+    } else if(proj < 0 && !alerts.some(function(a){return a.level==='danger';})){
+      alerts.push({level:'warn', text:'The current plan overshoots by ' + fmt(Math.abs(proj)) + ' — trim variable categories (Lunch, Misc, Travel) or defer non-urgent spending to close the gap.'});
+    }
+
+    var order = {danger:0, warn:1, info:2, ok:3};
+    alerts.sort(function(a,b){ return order[a.level] - order[b.level]; });
+    return alerts;
+  }
+
   function render(){
+    applyTheme();
     document.getElementById('monthLabel').textContent = state.monthLabel;
     document.getElementById('cashDisplay').textContent = fmt(state.cashInHand);
     document.getElementById('spendableDisplay').textContent = fmt(spendable());
@@ -469,9 +593,11 @@
 
     var insights = categoryInsights();
 
-    document.getElementById('todayLabel').textContent = 'Day ' + (daysElapsed()+1) + ' of ' + state.cycleLengthDays;
+    document.getElementById('todayLabel').textContent = 'Day ' + (daysElapsed()+1) + ' of ' + state.cycleLengthDays + ((daysElapsed()+1) > state.cycleLengthDays ? ' — tap "Start new month" below' : '');
     var spentToday = todaySpend();
-    var spentCycle = insights.reduce(function(s,i){ return s+i.spent; }, 0);
+    var spentCycle = state.transactions.filter(function(t){
+      return (t.type==='expense' || t.type==='accrual') && t.categoryId !== 'cc-payment' && new Date(t.date) >= new Date(state.cycleStart);
+    }).reduce(function(s,t){ return s+Number(t.amount); },0);
     var expectedCycle = insights.reduce(function(s,i){ return s+i.expectedToDate; }, 0);
     document.getElementById('spentTodayDisplay').textContent = fmt(spentToday);
     document.getElementById('spentCycleDisplay').textContent = fmt(spentCycle);
@@ -480,10 +606,10 @@
     var paceBanner = document.getElementById('paceBanner');
     var overallDelta = spentCycle - expectedCycle;
     if(overallDelta > 0){
-      paceBanner.style.background = '#FCEBEB'; paceBanner.style.color = '#791F1F';
+      paceBanner.style.background = 'var(--bad-bg)'; paceBanner.style.color = 'var(--bad-tx)';
       paceBanner.textContent = 'Running ' + fmt(overallDelta) + ' ahead of pace for this point in the cycle.';
     } else {
-      paceBanner.style.background = '#EAF3DE'; paceBanner.style.color = '#27500A';
+      paceBanner.style.background = 'var(--ok-bg)'; paceBanner.style.color = 'var(--ok-tx)';
       paceBanner.textContent = 'On pace — ' + fmt(Math.abs(overallDelta)) + ' under the expected spend for this point in the cycle.';
     }
 
@@ -495,61 +621,48 @@
       var label = document.createElement('span'); label.textContent = i.name;
       var status = document.createElement('span'); status.className='mono';
       if(i.paceDelta > 0){
-        status.style.color = '#A32D2D';
+        status.style.color = 'var(--bad-tx)';
         status.textContent = fmt(i.paceDelta) + ' ahead of pace';
       } else {
-        status.style.color = '#4C7A1F';
+        status.style.color = 'var(--ok-tx)';
         status.textContent = fmt(Math.abs(i.paceDelta)) + ' under pace';
       }
       row.appendChild(label); row.appendChild(status);
       pl.appendChild(row);
     });
-    var overBudget = insights.filter(function(i){ return i.remaining < 0; });
-    var closeToLimit = insights.filter(function(i){ return i.remaining >= 0 && i.pct >= 80; });
     var banner = document.getElementById('insightsBanner');
     var dLeft = daysRemaining();
-    var accaDaysLeft = null, accaShortfall = null;
-    var urgentDeadline = state.deadlines.find(function(d){
-      var daysLeft = Math.ceil((new Date(d.date) - new Date()) / (1000*60*60*24));
-      var fundAmount = d.reserveKey ? (state.reserves[d.reserveKey] || 0) : 0;
-      var shortfall = d.targetAmount - fundAmount;
-      return daysLeft >= 0 && daysLeft <= 15 && shortfall > 0;
-    });
-    var totalReserved = Object.values(state.reserves).reduce(function(s,v){return s+v;},0);
-    var cashShortfall = totalReserved - state.cashInHand;
-    var doubleCounted = insights.filter(function(i){ return i.possibleDouble; });
-    var ccToday = new Date();
-    var ccNextDue = new Date(ccToday.getFullYear(), ccToday.getMonth(), state.ccDueDay);
-    if(ccToday.getDate() > state.ccDueDay) ccNextDue = new Date(ccToday.getFullYear(), ccToday.getMonth()+1, state.ccDueDay);
-    var ccDaysToDue = Math.ceil((ccNextDue - ccToday) / (1000*60*60*24));
-    if(cashShortfall > 0){
-      banner.style.background = '#FCEBEB'; banner.style.color = '#791F1F';
-      banner.textContent = 'Your reserves (' + fmt(totalReserved) + ') exceed your actual cash-in-hand by ' + fmt(cashShortfall) + '. Update cash-in-hand once the real money is there.';
-    } else if(state.ccPayable > 0 && ccDaysToDue <= 5){
-      banner.style.background = '#FCEBEB'; banner.style.color = '#791F1F';
-      banner.textContent = 'Credit card bill of ' + fmt(state.ccPayable) + ' due in ' + ccDaysToDue + ' days.';
-    } else if(urgentDeadline){
-      var uDaysLeft = Math.ceil((new Date(urgentDeadline.date) - new Date()) / (1000*60*60*24));
-      var uFund = urgentDeadline.reserveKey ? (state.reserves[urgentDeadline.reserveKey] || 0) : 0;
-      var uShort = urgentDeadline.targetAmount - uFund;
-      banner.style.background = '#FCEBEB'; banner.style.color = '#791F1F';
-      banner.textContent = urgentDeadline.name + ' due in ' + uDaysLeft + ' days and the fund is ' + fmt(uShort) + ' short — arrange the difference separately.';
-    } else if(doubleCounted.length > 0){
-      banner.style.background = '#FAEEDA'; banner.style.color = '#633806';
-      banner.textContent = 'Possible double-counting on ' + doubleCounted.map(function(i){return i.name;}).join(', ') + ' — both a lump-sum tick and logged entries exist this cycle.';
-    } else if(overBudget.length > 0){
-      banner.style.background = '#FCEBEB'; banner.style.color = '#791F1F';
-      banner.textContent = 'Over budget on ' + overBudget.map(function(i){return i.name;}).join(', ') + ' — ' + dLeft + ' days left in this cycle.';
-    } else if(closeToLimit.length > 0){
-      banner.style.background = '#FAEEDA'; banner.style.color = '#633806';
-      banner.textContent = 'Getting close to budget on ' + closeToLimit.map(function(i){return i.name;}).join(', ') + ' — ' + dLeft + ' days left in this cycle.';
-    } else if(projected() < 0){
-      banner.style.background = '#FCEBEB'; banner.style.color = '#791F1F';
-      banner.textContent = 'Remaining fixed bills exceed your spendable cash. Projected shortfall: ' + fmt(Math.abs(projected()));
+    var alerts = computeAlerts(insights);
+    var levelStyles = {
+      danger: {bg:'var(--bad-bg)', tx:'var(--bad-tx)'},
+      warn:   {bg:'var(--warn-bg)', tx:'var(--warn-tx)'},
+      info:   {bg:'var(--surface)', tx:'var(--ink-2)'},
+      ok:     {bg:'var(--ok-bg)', tx:'var(--ok-tx)'}
+    };
+    if(alerts.length > 0){
+      var top = alerts[0];
+      banner.style.display = '';
+      banner.style.background = levelStyles[top.level].bg;
+      banner.style.color = levelStyles[top.level].tx;
+      banner.textContent = top.text;
     } else {
-      banner.style.background = '#EAF3DE'; banner.style.color = '#27500A';
-      banner.textContent = 'On track — ' + dLeft + ' days left in this cycle, ' + fmt(projected()) + ' projected after remaining bills.';
+      banner.style.display = '';
+      banner.style.background = 'var(--ok-bg)'; banner.style.color = 'var(--ok-tx)';
+      banner.textContent = 'On track — ' + dLeft + ' days left in this cycle.';
     }
+    var al = document.getElementById('alertsList');
+    al.innerHTML = '';
+    alerts.slice(1).forEach(function(a){
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:8px;align-items:flex-start;font-size:12.5px;padding:6px 4px;border-bottom:1px solid var(--line);';
+      var dot = document.createElement('span');
+      dot.style.cssText = 'flex:none;width:8px;height:8px;border-radius:50%;margin-top:5px;background:' + (a.level==='danger'?'var(--bar-bad)':a.level==='warn'?'var(--bar-warn)':a.level==='ok'?'var(--bar-ok)':'var(--ink-3)') + ';';
+      var txt = document.createElement('span');
+      txt.style.color = a.level==='info' ? 'var(--ink-2)' : levelStyles[a.level].tx;
+      txt.textContent = a.text;
+      row.appendChild(dot); row.appendChild(txt);
+      al.appendChild(row);
+    });
 
     var il = document.getElementById('insightsList');
     il.innerHTML = '';
@@ -561,21 +674,21 @@
       var label = document.createElement('span'); label.textContent = i.name;
       var figs = document.createElement('span'); figs.className='mono';
       figs.textContent = fmt(i.spent) + ' / ' + fmt(i.budget);
-      figs.style.color = i.remaining < 0 ? '#993C1D' : 'var(--text-secondary,#6b6a63)';
+      figs.style.color = i.remaining < 0 ? 'var(--money-out)' : 'var(--ink-2)';
       top.appendChild(label); top.appendChild(figs);
       var barBg = document.createElement('div');
       barBg.style.cssText = 'height:6px;border-radius:4px;background:rgba(0,0,0,0.07);overflow:hidden;';
       var barFill = document.createElement('div');
       var pctCapped = Math.min(100, i.pct);
-      barFill.style.cssText = 'height:100%;width:'+pctCapped+'%;background:'+(i.remaining<0?'#D85A30':(i.pct>=80?'#EF9F27':'#639922'))+';';
+      barFill.style.cssText = 'height:100%;width:'+pctCapped+'%;background:'+(i.remaining<0?'var(--bar-bad)':(i.pct>=80?'var(--bar-warn)':'var(--bar-ok)'))+';';
       barBg.appendChild(barFill);
       var sub = document.createElement('div');
-      sub.style.fontSize='11px'; sub.style.color='var(--text-muted,#999)'; sub.style.marginTop='4px';
+      sub.style.fontSize='11px'; sub.style.color='var(--ink-3)'; sub.style.marginTop='4px';
       sub.textContent = i.remaining >= 0 ? (fmt(i.remaining) + ' left, about ' + fmt(i.dailyAllowance) + '/day for ' + dLeft + ' more days') : (fmt(Math.abs(i.remaining)) + ' over budget');
       row.appendChild(top); row.appendChild(barBg); row.appendChild(sub);
       if(i.possibleDouble){
         var warn = document.createElement('div');
-        warn.style.fontSize='11px'; warn.style.color='#A32D2D'; warn.style.marginTop='2px';
+        warn.style.fontSize='11px'; warn.style.color='var(--bad-tx)'; warn.style.marginTop='2px';
         warn.textContent = 'Both a checked-off lump sum and separately logged entries exist this cycle — check for double-counting.';
         row.appendChild(warn);
       }
@@ -614,13 +727,19 @@
       var dueSoon = false;
       var labelText = f.name + (f.type==='reserve' ? ' (reserve)' : '') + (f.paymentMethod==='credit_card' ? ' (credit card)' : '');
       if(f.dueDay){
-        labelText += ' (due ' + f.dueDay + (f.dueDay===1?'st':f.dueDay===2?'nd':f.dueDay===3?'rd':'th') + ')';
+        var dd = f.dueDay, suffix = 'th';
+        if(dd % 100 < 11 || dd % 100 > 13){
+          if(dd % 10 === 1) suffix = 'st';
+          else if(dd % 10 === 2) suffix = 'nd';
+          else if(dd % 10 === 3) suffix = 'rd';
+        }
+        labelText += ' (due ' + dd + suffix + ')';
         var todayDom = new Date().getDate();
         var diffToDue = f.dueDay - todayDom;
         if(!f.paid && diffToDue >= 0 && diffToDue <= 3) dueSoon = true;
       }
       label.textContent = labelText;
-      if(dueSoon){ label.style.color = '#A32D2D'; label.style.fontWeight = '600'; }
+      if(dueSoon){ label.style.color = 'var(--bad-tx)'; label.style.fontWeight = '600'; }
       left.appendChild(cb); left.appendChild(label);
       var right = document.createElement('div');
       right.style.display='flex'; right.style.alignItems='center'; right.style.gap='10px';
@@ -630,15 +749,15 @@
         editInput.type = 'number';
         editInput.value = f.amount;
         editInput.style.width = '90px'; editInput.style.height='28px'; editInput.style.fontSize='13px';
-        editInput.style.border = '1px solid var(--border-strong,#bbb)'; editInput.style.borderRadius='6px'; editInput.style.padding='0 6px';
+        editInput.style.border = '1px solid var(--line-2)'; editInput.style.borderRadius='6px'; editInput.style.padding='0 6px';
         var save = document.createElement('button');
         save.textContent = 'Save';
-        save.style.cssText = 'cursor:pointer;font-size:12px;padding:3px 10px;border:1px solid #0F6E56;border-radius:6px;background:transparent;color:#0F6E56;';
+        save.style.cssText = 'cursor:pointer;font-size:12px;padding:3px 10px;border:1px solid var(--money-in);border-radius:6px;background:transparent;color:var(--money-in);';
         save.onclick = function(){ saveEdit(f.id, editInput.value); };
         editInput.onkeydown = function(e){ if(e.key==='Enter') saveEdit(f.id, editInput.value); if(e.key==='Escape'){ editingId=null; render(); } };
         var cancel = document.createElement('button');
         cancel.textContent = 'Cancel';
-        cancel.style.cssText = 'cursor:pointer;font-size:12px;padding:3px 10px;border:1px solid var(--border,#ddd8ca);border-radius:6px;background:transparent;color:var(--text-secondary,#6b6a63);';
+        cancel.style.cssText = 'cursor:pointer;font-size:12px;padding:3px 10px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink-2);';
         cancel.onclick = function(){ editingId = null; render(); };
         right.appendChild(editInput); right.appendChild(save); right.appendChild(cancel);
       } else {
@@ -647,11 +766,11 @@
         amt.textContent = fmt(f.amount);
         var edit = document.createElement('button');
         edit.textContent = 'Edit';
-        edit.style.cssText = 'cursor:pointer;font-size:12px;padding:3px 10px;border:1px solid #1C2B2F;border-radius:6px;background:transparent;color:inherit;';
+        edit.style.cssText = 'cursor:pointer;font-size:12px;padding:3px 10px;border:1px solid var(--line-2);border-radius:6px;background:transparent;color:inherit;';
         edit.onclick = function(){ editingId = f.id; render(); };
         var del = document.createElement('button');
         del.textContent = 'Remove';
-        del.style.cssText = 'cursor:pointer;font-size:12px;padding:3px 10px;border:1px solid var(--border,#ddd8ca);border-radius:6px;background:transparent;color:var(--text-secondary,#6b6a63);';
+        del.style.cssText = 'cursor:pointer;font-size:12px;padding:3px 10px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink-2);';
         del.onclick = function(){ removeFixed(f.id); };
         right.appendChild(amt); right.appendChild(edit); right.appendChild(del);
       }
@@ -662,28 +781,26 @@
 
     document.getElementById('ccPayableDisplay').textContent = fmt(state.ccPayable);
     var today = new Date();
-    var todayDom = today.getDate();
-    var nextDue = new Date(today.getFullYear(), today.getMonth(), state.ccDueDay);
-    if(todayDom > state.ccDueDay) nextDue = new Date(today.getFullYear(), today.getMonth()+1, state.ccDueDay);
+    var nextDue = ccNextDueDate();
     var daysToDue = Math.ceil((nextDue - today) / (1000*60*60*24));
     var ccStatusEl = document.getElementById('ccStatus');
     if(state.ccPayable <= 0){
-      ccStatusEl.style.color = 'var(--text-muted,#999)';
+      ccStatusEl.style.color = 'var(--ink-3)';
       ccStatusEl.textContent = 'No outstanding balance right now.';
     } else if(daysToDue <= 5){
-      ccStatusEl.style.color = spendable() < state.ccPayable ? '#A32D2D' : '#633806';
+      ccStatusEl.style.color = spendable() < state.ccPayable ? 'var(--bad-tx)' : 'var(--warn-tx)';
       ccStatusEl.textContent = 'Due in ' + daysToDue + ' days' + (spendable() < state.ccPayable ? ' — spendable cash may not cover it yet.' : '.');
     } else {
-      ccStatusEl.style.color = 'var(--text-secondary,#6b6a63)';
+      ccStatusEl.style.color = 'var(--ink-2)';
       ccStatusEl.textContent = 'Due in ' + daysToDue + ' days.';
     }
 
     var salEl = document.getElementById('salaryStatus');
     if(state.salaryReceivedThisCycle){
-      salEl.style.color = '#27500A';
+      salEl.style.color = 'var(--ok-tx)';
       salEl.textContent = 'Salary of ' + fmt(state.monthlyIncome) + ' logged as received on ' + state.salaryReceivedDate + ' for this cycle.';
     } else {
-      salEl.style.color = '#633806';
+      salEl.style.color = 'var(--warn-tx)';
       salEl.textContent = 'Salary of ' + fmt(state.monthlyIncome) + ' not yet logged as received this cycle — projections assume it has not landed.';
     }
     document.getElementById('incomeAmountInput').value = state.monthlyIncome;
@@ -714,29 +831,29 @@
       topLine.style.display='flex'; topLine.style.justifyContent='space-between'; topLine.style.alignItems='center';
       var label = document.createElement('span'); label.textContent = d.name + ' — ' + d.date;
       var delBtn = document.createElement('button'); delBtn.textContent = 'Remove';
-      delBtn.style.cssText = 'cursor:pointer;font-size:11px;padding:2px 8px;border:1px solid var(--border,#ddd8ca);border-radius:6px;background:transparent;color:var(--text-secondary,#6b6a63);';
+      delBtn.style.cssText = 'cursor:pointer;font-size:11px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink-2);';
       delBtn.onclick = function(){ state.deadlines = state.deadlines.filter(function(x){return x.id!==d.id;}); save(); render(); };
       topLine.appendChild(label); topLine.appendChild(delBtn);
       var statusLine = document.createElement('div');
       statusLine.style.marginTop='2px';
       if(daysLeft < 0){
-        statusLine.style.color = 'var(--text-muted,#999)';
+        statusLine.style.color = 'var(--ink-3)';
         statusLine.textContent = 'This deadline has passed — remove it or update the date.';
       } else if(shortfall === null){
-        statusLine.style.color = daysLeft <= 7 ? '#A32D2D' : 'var(--text-secondary,#6b6a63)';
+        statusLine.style.color = daysLeft <= 7 ? 'var(--bad-tx)' : 'var(--ink-2)';
         statusLine.textContent = daysLeft + ' days left, target ' + fmt(d.targetAmount) + ' (no linked fund).';
       } else if(shortfall <= 0){
         var totalReservedAll = Object.values(state.reserves).reduce(function(s,v){return s+v;},0);
         var cashShort = totalReservedAll - state.cashInHand;
         if(cashShort > 0){
-          statusLine.style.color = '#A32D2D';
+          statusLine.style.color = 'var(--bad-tx)';
           statusLine.textContent = daysLeft + ' days left — fund target met on paper, but check cash-in-hand actually covers it.';
         } else {
-          statusLine.style.color = '#27500A';
+          statusLine.style.color = 'var(--ok-tx)';
           statusLine.textContent = daysLeft + ' days left — fund fully covered (' + fmt(fundAmount) + ' of ' + fmt(d.targetAmount) + ').';
         }
       } else {
-        statusLine.style.color = daysLeft <= 15 ? '#A32D2D' : '#633806';
+        statusLine.style.color = daysLeft <= 15 ? 'var(--bad-tx)' : 'var(--warn-tx)';
         statusLine.textContent = daysLeft + ' days left — ' + fmt(shortfall) + ' still needed toward ' + fmt(d.targetAmount) + '.';
       }
       row.appendChild(topLine); row.appendChild(statusLine);
@@ -760,7 +877,7 @@
     tl.innerHTML = '';
     if(state.transactions.length === 0){
       var empty = document.createElement('div');
-      empty.style.fontSize='13px'; empty.style.color='var(--text-muted,#999)';
+      empty.style.fontSize='13px'; empty.style.color='var(--ink-3)';
       empty.textContent = 'No transactions logged yet.';
       tl.appendChild(empty);
     }
@@ -774,12 +891,12 @@
         editWrap.style.display='flex'; editWrap.style.gap='6px'; editWrap.style.alignItems='center';
         var amtInput = document.createElement('input');
         amtInput.type = 'number'; amtInput.value = t.amount;
-        amtInput.style.cssText = 'width:90px;height:26px;font-size:12px;border:1px solid var(--border-strong,#bbb);border-radius:6px;padding:0 6px;';
+        amtInput.style.cssText = 'width:90px;height:26px;font-size:12px;border:1px solid var(--line-2);border-radius:6px;padding:0 6px;';
         var saveBtn = document.createElement('button'); saveBtn.textContent = 'Save';
-        saveBtn.style.cssText = 'cursor:pointer;font-size:11px;padding:3px 8px;border:1px solid #0F6E56;border-radius:6px;background:transparent;color:#0F6E56;';
+        saveBtn.style.cssText = 'cursor:pointer;font-size:11px;padding:3px 8px;border:1px solid var(--money-in);border-radius:6px;background:transparent;color:var(--money-in);';
         saveBtn.onclick = function(){ editTransactionAmount(t.id, amtInput.value); };
         var cancelBtn = document.createElement('button'); cancelBtn.textContent = 'Cancel';
-        cancelBtn.style.cssText = 'cursor:pointer;font-size:11px;padding:3px 8px;border:1px solid var(--border,#ddd8ca);border-radius:6px;background:transparent;color:var(--text-secondary,#6b6a63);';
+        cancelBtn.style.cssText = 'cursor:pointer;font-size:11px;padding:3px 8px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink-2);';
         cancelBtn.onclick = function(){ txEditingId = null; render(); };
         editWrap.appendChild(amtInput); editWrap.appendChild(saveBtn); editWrap.appendChild(cancelBtn);
         row.appendChild(left); row.appendChild(editWrap);
@@ -790,13 +907,13 @@
         rightWrap.style.display='flex'; rightWrap.style.gap='8px'; rightWrap.style.alignItems='center';
         var right = document.createElement('span'); right.className='mono'; right.style.fontSize='13px';
         var sign = t.type==='income' ? '+' : (t.type==='transfer' || t.type==='accrual' ? '' : '-');
-        right.style.color = t.type==='income' ? '#0F6E56' : (t.type==='transfer' ? 'var(--text-secondary,#6b6a63)' : (t.type==='accrual' ? '#8A5A1F' : '#993C1D'));
+        right.style.color = t.type==='income' ? 'var(--money-in)' : (t.type==='transfer' ? 'var(--ink-2)' : (t.type==='accrual' ? 'var(--neutral-tx)' : 'var(--money-out)'));
         right.textContent = sign + fmt(t.amount) + (t.type==='accrual' ? ' (card)' : '');
         var editTxBtn = document.createElement('button'); editTxBtn.textContent = 'Edit';
-        editTxBtn.style.cssText = 'cursor:pointer;font-size:11px;padding:2px 8px;border:1px solid var(--border,#ddd8ca);border-radius:6px;background:transparent;color:var(--text-secondary,#6b6a63);';
+        editTxBtn.style.cssText = 'cursor:pointer;font-size:11px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink-2);';
         editTxBtn.onclick = function(){ txEditingId = t.id; render(); };
         var delTxBtn = document.createElement('button'); delTxBtn.textContent = '×';
-        delTxBtn.style.cssText = 'cursor:pointer;font-size:13px;padding:2px 8px;border:1px solid var(--border,#ddd8ca);border-radius:6px;background:transparent;color:var(--text-secondary,#6b6a63);';
+        delTxBtn.style.cssText = 'cursor:pointer;font-size:13px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink-2);';
         delTxBtn.onclick = function(){ deleteTransaction(t.id); };
         rightWrap.appendChild(right); rightWrap.appendChild(editTxBtn); rightWrap.appendChild(delTxBtn);
         row.appendChild(left); row.appendChild(rightWrap);
@@ -812,7 +929,7 @@
     gl.innerHTML = '';
     if(state.goals.length === 0){
       var noGoals = document.createElement('div');
-      noGoals.style.fontSize='13px'; noGoals.style.color='var(--text-muted,#999)';
+      noGoals.style.fontSize='13px'; noGoals.style.color='var(--ink-3)';
       noGoals.textContent = 'No savings goals set up yet.';
       gl.appendChild(noGoals);
     }
@@ -826,14 +943,18 @@
       head.style.display='flex'; head.style.justifyContent='space-between'; head.style.alignItems='center';
       var label = document.createElement('span'); label.style.fontSize='14px'; label.style.fontWeight='600'; label.textContent = g.name;
       var delBtn = document.createElement('button'); delBtn.textContent = 'Remove goal';
-      delBtn.style.cssText = 'cursor:pointer;font-size:11px;padding:2px 8px;border:1px solid var(--border,#ddd8ca);border-radius:6px;background:transparent;color:var(--text-secondary,#6b6a63);';
-      delBtn.onclick = function(){ state.goals = state.goals.filter(function(x){return x.id!==g.id;}); save(); render(); };
+      delBtn.style.cssText = 'cursor:pointer;font-size:11px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink-2);';
+      delBtn.onclick = function(){
+        state.goals = state.goals.filter(function(x){return x.id!==g.id;});
+        state.fixed = state.fixed.filter(function(f){return f.id!==g.fixedItemId;});
+        save(); render();
+      };
       head.appendChild(label); head.appendChild(delBtn);
       var totalLine = document.createElement('div');
       totalLine.className='mono'; totalLine.style.fontSize='16px'; totalLine.style.margin='4px 0';
       totalLine.textContent = fmt(lifetimeTotal) + ' contributed so far';
       var subLine = document.createElement('div');
-      subLine.style.fontSize='12px'; subLine.style.color='var(--text-secondary,#6b6a63);';
+      subLine.style.fontSize='12px'; subLine.style.color='var(--ink-2);';
       if(g.targetDate){
         var monthsLeft = Math.max(0, Math.round((new Date(g.targetDate) - new Date()) / (1000*60*60*24*30.44)));
         var projected = lifetimeTotal + (g.monthlyContribution * monthsLeft);
@@ -849,7 +970,7 @@
     hl.innerHTML = '';
     if(state.history.length === 0){
       var noHist = document.createElement('div');
-      noHist.style.fontSize='13px'; noHist.style.color='var(--text-muted,#999)';
+      noHist.style.fontSize='13px'; noHist.style.color='var(--ink-3)';
       noHist.textContent = 'No past months archived yet — this fills in once you tap "Start new month."';
       hl.appendChild(noHist);
     }
@@ -860,10 +981,10 @@
       head.style.display='flex'; head.style.justifyContent='space-between'; head.style.fontSize='13px'; head.style.fontWeight='600';
       head.textContent = h.monthLabel;
       var totalsLine = document.createElement('div');
-      totalsLine.className='mono'; totalsLine.style.fontSize='12px'; totalsLine.style.color='var(--text-secondary,#6b6a63)'; totalsLine.style.margin='2px 0 4px';
+      totalsLine.className='mono'; totalsLine.style.fontSize='12px'; totalsLine.style.color='var(--ink-2)'; totalsLine.style.margin='2px 0 4px';
       totalsLine.textContent = 'Income ' + fmt(h.totalIncome) + ' · Spent ' + fmt(h.totalExpense) + ' · Cash at close ' + fmt(h.cashAtClose);
       var catLine = document.createElement('div');
-      catLine.style.fontSize='11px'; catLine.style.color='var(--text-muted,#999)';
+      catLine.style.fontSize='11px'; catLine.style.color='var(--ink-3)';
       catLine.textContent = h.categories.map(function(c){ return c.name + ': ' + fmt(c.spent); }).join(' · ');
       block.appendChild(head); block.appendChild(totalsLine); block.appendChild(catLine);
       hl.appendChild(block);
@@ -917,6 +1038,10 @@
         applyReverse(linkedTx);
         linkedTx.amount = newAmount;
         applyForward(linkedTx);
+      } else if(f.type==='expense' && f.paymentMethod==='credit_card'){
+        var ccAdjTx = {id:genId(), date:new Date().toISOString().slice(0,10), type:'accrual', category:'Card adjustment: '+f.name, categoryId:f.id, amount:delta, source:'auto'};
+        applyForward(ccAdjTx);
+        state.transactions.push(ccAdjTx);
       } else if(f.type==='expense'){
         var adjTx = {id:genId(), date:new Date().toISOString().slice(0,10), type: delta>0?'expense':'income', category:'Overrun adjustment: '+f.name, categoryId:f.id, amount:Math.abs(delta), source:'auto'};
         applyForward(adjTx);
@@ -954,6 +1079,32 @@
     save(); render();
   }
 
+  function ccDueDateForCharge(chargeDateStr){
+    var d = new Date(chargeDateStr);
+    var day = d.getDate();
+    var month = d.getMonth();
+    var year = d.getFullYear();
+    var closeMonth, closeYear;
+    if(day < state.ccStatementDay){
+      closeMonth = month; closeYear = year;
+    } else {
+      closeMonth = month + 1; closeYear = year;
+    }
+    return new Date(closeYear, closeMonth, state.ccDueDay);
+  }
+
+  function ccNextDueDate(){
+    var accrualTxs = state.transactions.filter(function(t){ return t.type==='accrual' && !t.settled; });
+    if(accrualTxs.length === 0){
+      var today = new Date();
+      var due = new Date(today.getFullYear(), today.getMonth(), state.ccDueDay);
+      if(today.getDate() > state.ccDueDay) due = new Date(today.getFullYear(), today.getMonth()+1, state.ccDueDay);
+      return due;
+    }
+    var earliest = accrualTxs.reduce(function(min,t){ return new Date(t.date) < new Date(min.date) ? t : min; });
+    return ccDueDateForCharge(earliest.date);
+  }
+
   function payCreditCardBill(){
     if(!state) return;
     var amt = state.ccPayable;
@@ -961,6 +1112,7 @@
     var tx = {id:genId(), date:new Date().toISOString().slice(0,10), type:'expense', category:'Credit card bill payment', categoryId:'cc-payment', amount:amt, source:'auto'};
     applyForward(tx);
     state.transactions.push(tx);
+    state.transactions.forEach(function(t){ if(t.type==='accrual' && !t.settled){ t.settled = true; } });
     save(); render();
   }
 
@@ -968,6 +1120,12 @@
     state.fixed = state.fixed.filter(function(x){return x.id!==id;});
     save(); render();
   }
+
+  document.getElementById('themeToggle').onclick = function(){
+    if(!state) return;
+    state.theme = state.theme === 'dark' ? 'minimal' : 'dark';
+    save(); render();
+  };
 
   document.getElementById('setCashBtn').onclick = function(){
     if(!state) return;
@@ -1021,6 +1179,32 @@
     payCreditCardBill();
   };
 
+  var resetCcArmed = false;
+  document.getElementById('resetCcBtn').onclick = function(){
+    if(!state) return;
+    var btn = document.getElementById('resetCcBtn');
+    if(!resetCcArmed){
+      resetCcArmed = true;
+      btn.textContent = 'Click again to confirm';
+      btn.style.borderColor = 'var(--bad-tx)'; btn.style.color = 'var(--bad-tx)';
+      setTimeout(function(){
+        resetCcArmed = false;
+        btn.textContent = 'Reset balance';
+        btn.style.borderColor = 'var(--line)'; btn.style.color = 'var(--ink-2)';
+      }, 4000);
+      return;
+    }
+    var accrualIds = state.transactions.filter(function(t){ return t.type==='accrual' && !t.settled; }).map(function(t){ return t.id; });
+    state.transactions.forEach(function(t){ if(t.type==='accrual' && !t.settled){ applyReverse(t); } });
+    state.transactions = state.transactions.filter(function(t){ return !(t.type === 'accrual' && !t.settled); });
+    state.fixed.forEach(function(f){ if(accrualIds.indexOf(f.lastTxId) > -1){ f.paid = false; f.lastTxId = null; } });
+    state.ccPayable = 0;
+    resetCcArmed = false;
+    btn.textContent = 'Reset balance';
+    btn.style.borderColor = 'var(--line)'; btn.style.color = 'var(--ink-2)';
+    save(); render();
+  };
+
   document.getElementById('saveIncomeBtn').onclick = function(){
     if(!state) return;
     var v = parseFloat(document.getElementById('incomeAmountInput').value);
@@ -1060,7 +1244,7 @@
     var targetDate = document.getElementById('newGoalDate').value;
     if(!name || isNaN(monthly) || monthly <= 0) return;
     var itemId = 'g' + Date.now();
-    state.fixed.push({id:itemId, name:name, amount:monthly, type:'expense', paid:false, dueDay:null});
+    state.fixed.push({id:itemId, name:name, amount:monthly, type:'expense', paid:false, dueDay:null, paymentMethod:'cash'});
     state.goals.push({id: genId(), name:name, fixedItemId:itemId, monthlyContribution:monthly, targetDate: targetDate || null});
     document.getElementById('newGoalName').value = '';
     document.getElementById('newGoalMonthly').value = '';
@@ -1092,18 +1276,23 @@
     if(!resetArmed){
       resetArmed = true;
       btn.textContent = 'Click again to confirm';
-      btn.style.borderColor = '#A32D2D'; btn.style.color = '#A32D2D';
+      btn.style.borderColor = 'var(--bad-tx)'; btn.style.color = 'var(--bad-tx)';
       setTimeout(function(){
         resetArmed = false;
         btn.textContent = 'Reset transactions';
-        btn.style.borderColor = 'var(--border,#ddd8ca)'; btn.style.color = 'var(--text-secondary,#6b6a63)';
+        btn.style.borderColor = 'var(--line)'; btn.style.color = 'var(--ink-2)';
       }, 4000);
       return;
     }
+    state.transactions.forEach(function(t){ applyReverse(t); });
     state.transactions = [];
+    state.ccPayable = 0;
+    state.salaryReceivedThisCycle = false;
+    state.salaryReceivedDate = null;
+    state.fixed.forEach(function(f){ f.paid = false; f.lastTxId = null; });
     resetArmed = false;
     btn.textContent = 'Reset transactions';
-    btn.style.borderColor = 'var(--border,#ddd8ca)'; btn.style.color = 'var(--text-secondary,#6b6a63)';
+    btn.style.borderColor = 'var(--line)'; btn.style.color = 'var(--ink-2)';
     save(); render();
   };
 
