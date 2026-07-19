@@ -163,6 +163,18 @@
   </div>
 
   <div class="card" style="margin-bottom:1.25rem;">
+    <strong style="font-size:15px;">Other income (earned, not always received immediately)</strong>
+    <div id="incomeReceivablesList" style="margin-top:8px;"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+      <input type="text" id="newIncomeReceivableSource" placeholder="Source (e.g. ProFiler Tax - client name)" style="flex:1;min-width:160px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <input type="number" id="newIncomeReceivableAmount" placeholder="Amount earned" style="width:130px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <input type="date" id="newIncomeReceivableDate" style="height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <button class="btn" id="addIncomeReceivableBtn" style="height:34px;padding:0 14px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:13px;">Log income earned</button>
+    </div>
+    <div style="font-size:11px;color:var(--ink-3);margin-top:6px;">Counts as income in your P&L the moment you log it (accrual basis) — doesn't wait for cash. When the client actually pays, log the payment received below to move it from receivable to cash, without counting as income twice.</div>
+  </div>
+
+  <div class="card" style="margin-bottom:1.25rem;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
       <strong style="font-size:15px;">Today's pace</strong>
       <span id="todayLabel" style="font-size:12px;color:var(--ink-2);"></span>
@@ -207,13 +219,17 @@
         <option value="expense">Expense</option>
         <option value="income">Income</option>
       </select>
+      <select id="txNature" style="height:34px;border:1px solid var(--line);border-radius:6px;font-size:13px;" title="Nature of transaction">
+        <option value="expense">Nature: Expense</option>
+        <option value="asset">Nature: Asset</option>
+      </select>
       <select id="txCategorySelect" style="flex:1;min-width:140px;height:34px;border:1px solid var(--line);border-radius:6px;font-size:13px;"></select>
       <input type="text" id="txNote" placeholder="Note (optional, e.g. mobile cover)" style="flex:1;min-width:140px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
       <input type="number" id="txAmount" placeholder="Amount" style="width:110px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
       <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-2);"><input type="checkbox" id="txCreditCard"> Charge to credit card</label>
       <button class="btn" id="addTxBtn" style="height:34px;padding:0 14px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:13px;">Log</button>
     </div>
-    <div style="font-size:11px;color:var(--ink-3);margin-top:6px;">Pick the budget line this belongs to. Choose "Other / uncategorized" for one-off purchases (like a phone cover) that shouldn't count against a recurring budget. To pay an actual bill from a reserve fund (oil change, ACCA fee), select that reserve item here as an expense. Tick "Charge to credit card" if this is going on the card rather than paid from cash right now.</div>
+    <div style="font-size:11px;color:var(--ink-3);margin-top:6px;">Pick the budget line this belongs to. Choose "Other / uncategorized" for one-off purchases (like a phone cover) that shouldn't count against a recurring budget. To pay an actual bill from a reserve fund (oil change, ACCA fee), select that reserve item here as an expense. Tick "Charge to credit card" if this is going on the card rather than paid from cash right now. Set Nature to "Asset" for a purchase that should be capitalized (e.g. furniture, equipment) instead of expensed — it still deducts cash but shows on your Financial Position as an asset rather than hitting the Income and Expenditure Account.</div>
   </div>
   </div>
 
@@ -258,6 +274,11 @@
   <div class="card" style="margin-bottom:1rem;">
     <strong style="font-size:15px;">Reserves (earmarked, not spendable)</strong>
     <div id="reserveList" style="margin-top:8px;"></div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;">
+      <input type="text" id="newReserveName" placeholder="Reserve name (e.g. Oil change fund)" style="flex:1;min-width:150px;height:30px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <input type="number" id="newReserveAmount" placeholder="Monthly amount" style="width:120px;height:30px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <button class="btn" id="addReserveBtn" style="height:30px;padding:0 12px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:12px;">Add reserve</button>
+    </div>
     <div id="deadlineList" style="margin-top:4px;"></div>
     <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;">
       <input type="text" id="newDeadlineName" placeholder="Deadline name (e.g. Car token tax)" style="flex:1;min-width:140px;height:30px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
@@ -376,7 +397,15 @@
     <button class="btn" id="saveStatementConfigBtn" style="height:30px;padding:0 12px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:12px;margin-bottom:14px;">Save details</button>
 
     <div style="border-top:1px solid var(--line);padding-top:12px;">
-      <div style="font-size:13px;font-weight:600;margin-bottom:6px;">Income &amp; Expenditure Account — cycle to date</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+        <label style="font-size:11px;color:var(--ink-3);">Period from</label>
+        <input type="date" id="pnlFromInput" style="height:28px;padding:0 6px;border:1px solid var(--line);border-radius:6px;font-size:12px;">
+        <label style="font-size:11px;color:var(--ink-3);">to</label>
+        <input type="date" id="pnlToInput" style="height:28px;padding:0 6px;border:1px solid var(--line);border-radius:6px;font-size:12px;">
+        <button class="btn" id="applyPnlRangeBtn" style="height:28px;padding:0 10px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:11px;">Apply</button>
+        <button class="btn" id="resetPnlRangeBtn" style="height:28px;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:transparent;font-size:11px;color:var(--ink-2);">Reset to current cycle</button>
+      </div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px;" id="pnlHeading">Income &amp; Expenditure Account</div>
       <div id="pnlPreview" class="mono" style="font-size:12.5px;line-height:1.8;"></div>
 
       <div style="font-size:13px;font-weight:600;margin:14px 0 6px;">Statement of Financial Position — as at today</div>
@@ -402,10 +431,9 @@
       {id:'misc', name:'Misc.', amount:15000, type:'expense', paid:false, dueDay:null, paymentMethod:'cash'},
       {id:'claude', name:'Claude Pro', amount:5600, type:'expense', paid:false, dueDay:null, paymentMethod:'credit_card'},
       {id:'mobile', name:'Mobile', amount:1500, type:'expense', paid:false, dueDay:null, paymentMethod:'credit_card'},
-      {id:'oilres', name:'Oil change reserve', amount:2160, type:'reserve', reserveKey:'oil', paid:false},
       {id:'accares', name:'ACCA fee reserve', amount:27500, type:'reserve', reserveKey:'acca', paid:false}
     ],
-    reserves: {oil:0, acca:0},
+    reserves: {acca:0},
     ccPayable: 0,
     ccStatementDay: 10,
     ccDueDay: 30,
@@ -415,6 +443,7 @@
     history: [],
     goals: [],
     receivables: [],
+    incomeReceivables: [],
     payables: [],
     salaryReceivedThisCycle: false,
     salaryReceivedDate: null,
@@ -423,6 +452,8 @@
     cycleLengthDays: 30,
     theme: 'minimal',
     activeTab: 'today',
+    statementFrom: null,
+    statementTo: null,
     loan: {name:'iPhone EMI', principal:250000, aprPercent:29, paymentsMade:0, linkedItemId:'emi'},
     asset: {name:'iPhone', cost:490000, usefulLifeMonths:24, purchaseDate:null, depreciationMethod:'reducing_balance', depreciationRate:25},
     monthLabel: new Date().toLocaleString('default',{month:'long',year:'numeric'})
@@ -430,6 +461,7 @@
 
   var state = null;
   var editingId = null;
+  var reserveRemoveArmed = {};
   var txEditingId = null;
   var KEY = 'ledger-state-v1';
 
@@ -468,6 +500,13 @@
         else if(t.payableAction === 'repayment') p.balance -= Number(t.amount);
       }
     }
+    if(t.incomeReceivableId){
+      var ir = state.incomeReceivables.find(function(x){ return x.id === t.incomeReceivableId; });
+      if(ir){
+        if(t.incomeReceivableAction === 'earned') ir.balance += Number(t.amount);
+        else if(t.incomeReceivableAction === 'received') ir.balance -= Number(t.amount);
+      }
+    }
   }
 
   function applyReverse(t){
@@ -496,6 +535,13 @@
         else if(t.payableAction === 'repayment') p.balance += Number(t.amount);
       }
     }
+    if(t.incomeReceivableId){
+      var ir = state.incomeReceivables.find(function(x){ return x.id === t.incomeReceivableId; });
+      if(ir){
+        if(t.incomeReceivableAction === 'earned') ir.balance -= Number(t.amount);
+        else if(t.incomeReceivableAction === 'received') ir.balance += Number(t.amount);
+      }
+    }
   }
 
   async function load(){
@@ -509,6 +555,8 @@
     if(!state.cycleLengthDays) state.cycleLengthDays = 30;
     if(!state.theme) state.theme = 'minimal';
     if(!state.activeTab) state.activeTab = 'today';
+    if(state.statementFrom === undefined) state.statementFrom = null;
+    if(state.statementTo === undefined) state.statementTo = null;
     if(!state.loan) state.loan = {name:'iPhone EMI', principal:252500, aprPercent:29, paymentsMade:0, linkedItemId:'emi'};
     if(!state.asset) state.asset = {name:'iPhone', cost:252500, usefulLifeMonths:24, purchaseDate:null, depreciationMethod:'reducing_balance', depreciationRate:25};
     if(!state.asset.depreciationMethod) state.asset.depreciationMethod = 'straight_line';
@@ -519,6 +567,7 @@
     if(!state.history) state.history = [];
     if(!state.goals) state.goals = [];
     if(!state.receivables) state.receivables = [];
+    if(!state.incomeReceivables) state.incomeReceivables = [];
     if(!state.payables) state.payables = [];
     if(state.ccPayable === undefined) state.ccPayable = 0;
     if(!state.ccStatementDay) state.ccStatementDay = 10;
@@ -787,17 +836,28 @@
   }
 
   function computeStatements(){
-    var cycleTxns = state.transactions.filter(function(t){ return new Date(t.date) >= new Date(state.cycleStart); });
+    var periodFrom = state.statementFrom || state.cycleStart;
+    var periodTo = state.statementTo || new Date().toISOString().slice(0,10);
+    var cycleTxns = state.transactions.filter(function(t){
+      return new Date(t.date) >= new Date(periodFrom) && new Date(t.date) <= new Date(periodTo);
+    });
     var goalItemIds = state.goals.map(function(g){ return g.fixedItemId; });
     var schedule = buildLoanSchedule();
     var scheduleByTxId = {};
     schedule.entries.forEach(function(e){ scheduleByTxId[e.txId] = e; });
 
-    var income = cycleTxns.filter(function(t){ return t.type==='income' && !t.receivableId && !t.payableId; })
-      .reduce(function(s,t){ return s+Number(t.amount); }, 0);
+    var incomeTxns = cycleTxns.filter(function(t){
+      return (t.type==='income' || t.type==='income_accrual') && !t.receivableId && !t.payableId && t.incomeReceivableAction !== 'received';
+    });
+    var incomeBySource = {};
+    incomeTxns.forEach(function(t){
+      var key = t.categoryId === 'salary' ? 'Salary' : t.category.replace(/ \(earned, pending\)/, '');
+      incomeBySource[key] = (incomeBySource[key] || 0) + Number(t.amount);
+    });
+    var income = incomeTxns.reduce(function(s,t){ return s+Number(t.amount); }, 0);
 
     var expenseTxns = cycleTxns.filter(function(t){
-      return (t.type==='expense' || t.type==='accrual') && t.categoryId !== 'cc-payment' && goalItemIds.indexOf(t.categoryId) === -1 && !t.receivableId && !t.payableId;
+      return (t.type==='expense' || t.type==='accrual') && t.categoryId !== 'cc-payment' && goalItemIds.indexOf(t.categoryId) === -1 && !t.receivableId && !t.payableId && t.nature !== 'asset';
     });
     var expensesByCategory = {};
     var totalExpense = 0;
@@ -824,14 +884,17 @@
     var loanBalance = computeLoanBalance();
     var receivablesTotal = state.receivables.reduce(function(s,r){ return s + Math.max(0, r.balance); }, 0);
     var payablesTotal = state.payables.reduce(function(s,p){ return s + Math.max(0, p.balance); }, 0);
-    var totalAssets = unrestrictedCash + totalReserved + goalsTotal + dep.netBookValue + receivablesTotal;
+    var otherAssetsTotal = state.transactions.filter(function(t){ return t.nature === 'asset'; }).reduce(function(s,t){ return s+Number(t.amount); }, 0);
+    var incomeReceivablesTotal = state.incomeReceivables.reduce(function(s,ir){ return s + Math.max(0, ir.balance); }, 0);
+    var totalAssets = unrestrictedCash + totalReserved + goalsTotal + dep.netBookValue + receivablesTotal + otherAssetsTotal + incomeReceivablesTotal;
     var totalLiabilities = state.ccPayable + loanBalance + payablesTotal;
     var netPosition = totalAssets - totalLiabilities;
 
     return {
-      income: income, expensesByCategory: expensesByCategory, totalExpense: totalExpense, surplus: surplus,
+      periodFrom: periodFrom, periodTo: periodTo,
+      income: income, incomeBySource: incomeBySource, expensesByCategory: expensesByCategory, totalExpense: totalExpense, surplus: surplus,
       unrestrictedCash: unrestrictedCash, totalReserved: totalReserved, reserves: state.reserves, goalsTotal: goalsTotal,
-      assetCost: dep.cost, accumulatedDep: dep.accumulated, netBookValue: dep.netBookValue, receivablesTotal: receivablesTotal,
+      assetCost: dep.cost, accumulatedDep: dep.accumulated, netBookValue: dep.netBookValue, receivablesTotal: receivablesTotal, otherAssetsTotal: otherAssetsTotal, incomeReceivablesTotal: incomeReceivablesTotal,
       ccPayable: state.ccPayable, loanBalance: loanBalance, payablesTotal: payablesTotal, totalAssets: totalAssets, totalLiabilities: totalLiabilities, netPosition: netPosition
     };
   }
@@ -1059,17 +1122,67 @@
     }
     document.getElementById('incomeAmountInput').value = state.monthlyIncome;
 
+    var irl = document.getElementById('incomeReceivablesList');
+    irl.innerHTML = '';
+    if(state.incomeReceivables.length === 0){
+      var noIr = document.createElement('div');
+      noIr.style.fontSize='13px'; noIr.style.color='var(--ink-3)';
+      noIr.textContent = 'No other income logged yet.';
+      irl.appendChild(noIr);
+    }
+    state.incomeReceivables.forEach(function(ir){
+      var block = document.createElement('div');
+      block.style.padding='8px 0'; block.style.borderBottom='1px solid var(--line)';
+      var head = document.createElement('div');
+      head.style.display='flex'; head.style.justifyContent='space-between'; head.style.alignItems='center';
+      var label = document.createElement('span'); label.style.fontSize='14px'; label.style.fontWeight='600'; label.textContent = ir.source;
+      var delBtn = document.createElement('button'); delBtn.textContent = 'Remove';
+      delBtn.style.cssText = 'cursor:pointer;font-size:11px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink-2);';
+      delBtn.onclick = function(){
+        state.incomeReceivables = state.incomeReceivables.filter(function(x){return x.id!==ir.id;});
+        save(); render();
+      };
+      head.appendChild(label); head.appendChild(delBtn);
+      var balLine = document.createElement('div');
+      balLine.className='mono'; balLine.style.fontSize='16px'; balLine.style.margin='4px 0';
+      balLine.textContent = fmt(ir.balance) + (ir.balance <= 0 ? ' — fully received' : ' pending');
+      var subLine = document.createElement('div');
+      subLine.style.fontSize='12px'; subLine.style.color='var(--ink-2)';
+      subLine.textContent = 'Earned ' + ir.dateEarned;
+      block.appendChild(head); block.appendChild(balLine); block.appendChild(subLine);
+      if(ir.balance > 0){
+        var repayRow = document.createElement('div');
+        repayRow.style.cssText = 'display:flex;gap:6px;margin-top:6px;';
+        var repayInput = document.createElement('input');
+        repayInput.type = 'number'; repayInput.placeholder = 'Amount received';
+        repayInput.style.cssText = 'flex:1;height:28px;font-size:12px;padding:0 6px;border:1px solid var(--line);border-radius:6px;';
+        var repayBtn = document.createElement('button'); repayBtn.textContent = 'Log payment received';
+        repayBtn.style.cssText = 'cursor:pointer;font-size:11px;padding:0 10px;border:1px solid var(--line-2);border-radius:6px;background:transparent;color:var(--ink);';
+        repayBtn.onclick = function(){ logIncomeReceivablePayment(ir.id, repayInput.value); };
+        repayRow.appendChild(repayInput); repayRow.appendChild(repayBtn);
+        block.appendChild(repayRow);
+      }
+      irl.appendChild(block);
+    });
+
     var rl = document.getElementById('reserveList');
     rl.innerHTML = '';
-    var reserveLabels = {oil:'Oil change fund', acca:'ACCA exam fund'};
+    var reserveLabels = {acca:'ACCA exam fund'};
     Object.keys(state.reserves).forEach(function(key){
       var row = document.createElement('div');
       row.className = 'row';
       var matchingItem = state.fixed.find(function(f){ return f.reserveKey === key; });
       var label = document.createElement('span'); label.style.fontSize='14px';
       label.textContent = reserveLabels[key] || (matchingItem ? matchingItem.name : (key.replace(/_/g,' ') + ' fund'));
+      var right = document.createElement('div');
+      right.style.cssText = 'display:flex;align-items:center;gap:10px;';
       var amt = document.createElement('span'); amt.className='mono'; amt.style.fontSize='14px'; amt.textContent = fmt(state.reserves[key]);
-      row.appendChild(label); row.appendChild(amt);
+      var delBtn = document.createElement('button');
+      delBtn.textContent = reserveRemoveArmed[key] ? 'Click again to confirm' : 'Remove';
+      delBtn.style.cssText = 'cursor:pointer;font-size:11px;padding:2px 8px;border:1px solid ' + (reserveRemoveArmed[key] ? 'var(--bad-tx)' : 'var(--line)') + ';border-radius:6px;background:transparent;color:' + (reserveRemoveArmed[key] ? 'var(--bad-tx)' : 'var(--ink-2)') + ';';
+      delBtn.onclick = function(){ removeReserve(key); };
+      right.appendChild(amt); right.appendChild(delBtn);
+      row.appendChild(label); row.appendChild(right);
       rl.appendChild(row);
     });
 
@@ -1160,9 +1273,9 @@
         var rightWrap = document.createElement('div');
         rightWrap.style.display='flex'; rightWrap.style.gap='8px'; rightWrap.style.alignItems='center';
         var right = document.createElement('span'); right.className='mono'; right.style.fontSize='13px';
-        var sign = t.type==='income' ? '+' : (t.type==='transfer' || t.type==='accrual' ? '' : '-');
-        right.style.color = t.type==='income' ? 'var(--money-in)' : (t.type==='transfer' ? 'var(--ink-2)' : (t.type==='accrual' ? 'var(--neutral-tx)' : 'var(--money-out)'));
-        right.textContent = sign + fmt(t.amount) + (t.type==='accrual' ? ' (card)' : '');
+        var sign = (t.type==='income') ? '+' : (t.type==='transfer' || t.type==='accrual' || t.type==='income_accrual' ? '' : '-');
+        right.style.color = t.type==='income' ? 'var(--money-in)' : (t.type==='transfer' ? 'var(--ink-2)' : (t.type==='accrual' || t.type==='income_accrual' ? 'var(--neutral-tx)' : 'var(--money-out)'));
+        right.textContent = sign + fmt(t.amount) + (t.type==='accrual' ? ' (card)' : (t.type==='income_accrual' ? ' (pending)' : ''));
         var editTxBtn = document.createElement('button'); editTxBtn.textContent = 'Edit';
         editTxBtn.style.cssText = 'cursor:pointer;font-size:11px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink-2);';
         editTxBtn.onclick = function(){ txEditingId = t.id; render(); };
@@ -1318,9 +1431,20 @@
     document.getElementById('assetLifeRow').style.display = state.asset.depreciationMethod === 'straight_line' ? 'flex' : 'none';
 
     var stmt = computeStatements();
+    document.getElementById('pnlFromInput').value = stmt.periodFrom;
+    document.getElementById('pnlToInput').value = stmt.periodTo;
+    document.getElementById('pnlHeading').textContent = 'Income & Expenditure Account — ' + stmt.periodFrom + ' to ' + stmt.periodTo;
     var pnlEl = document.getElementById('pnlPreview');
     var pnlLines = ['Income'];
-    pnlLines.push('  Salary / income'.padEnd(30) + fmt(stmt.income).padStart(14));
+    if(Object.keys(stmt.incomeBySource).length === 0){
+      pnlLines.push('  (none logged this period)'.padEnd(30) + fmt(0).padStart(14));
+    } else {
+      Object.keys(stmt.incomeBySource).sort().forEach(function(k){
+        pnlLines.push(('  ' + k).padEnd(30) + fmt(stmt.incomeBySource[k]).padStart(14));
+      });
+    }
+    pnlLines.push('  '.padEnd(30) + '—'.padStart(14));
+    pnlLines.push('  Total income'.padEnd(30) + fmt(stmt.income).padStart(14));
     pnlLines.push('');
     pnlLines.push('Expenditure');
     Object.keys(stmt.expensesByCategory).sort().forEach(function(k){
@@ -1342,6 +1466,8 @@
     });
     if(stmt.goalsTotal > 0) bsLines.push('  Investment (mutual fund)'.padEnd(30) + fmt(stmt.goalsTotal).padStart(14));
     if(stmt.receivablesTotal > 0) bsLines.push('  Loans and advances receivable'.padEnd(30) + fmt(stmt.receivablesTotal).padStart(14));
+    if(stmt.otherAssetsTotal > 0) bsLines.push('  Other assets (at cost)'.padEnd(30) + fmt(stmt.otherAssetsTotal).padStart(14));
+    if(stmt.incomeReceivablesTotal > 0) bsLines.push('  Accrued income receivable'.padEnd(30) + fmt(stmt.incomeReceivablesTotal).padStart(14));
     bsLines.push('  ' + state.asset.name + ' at cost'.padEnd(30) + fmt(stmt.assetCost).padStart(14));
     bsLines.push('  Less: accumulated depreciation'.padEnd(30) + ('(' + fmt(stmt.accumulatedDep).replace('-','') + ')').padStart(14));
     bsLines.push('  Net book value'.padEnd(30) + fmt(stmt.netBookValue).padStart(14));
@@ -1500,6 +1626,18 @@
     return ccDueDateForCharge(earliest.date);
   }
 
+  function logIncomeReceivablePayment(incomeReceivableId, amountRaw){
+    if(!state) return;
+    var amount = parseFloat(amountRaw);
+    if(isNaN(amount) || amount <= 0) return;
+    var ir = state.incomeReceivables.find(function(x){ return x.id === incomeReceivableId; });
+    if(!ir) return;
+    var tx = {id:genId(), date:new Date().toISOString().slice(0,10), type:'income', category:'Payment received — ' + ir.source, categoryId:'income-receivable', incomeReceivableId:incomeReceivableId, incomeReceivableAction:'received', amount:amount, source:'manual'};
+    applyForward(tx);
+    state.transactions.push(tx);
+    save(); render();
+  }
+
   function logReceivableRepayment(receivableId, amountRaw){
     if(!state) return;
     var amount = parseFloat(amountRaw);
@@ -1524,6 +1662,21 @@
     save(); render();
   }
 
+  function removeReserve(key){
+    if(!state) return;
+    if(!reserveRemoveArmed[key]){
+      reserveRemoveArmed[key] = true;
+      setTimeout(function(){ reserveRemoveArmed[key] = false; render(); }, 4000);
+      render();
+      return;
+    }
+    delete state.reserves[key];
+    state.fixed = state.fixed.filter(function(f){ return f.reserveKey !== key; });
+    state.deadlines.forEach(function(d){ if(d.reserveKey === key) d.reserveKey = null; });
+    reserveRemoveArmed[key] = false;
+    save(); render();
+  }
+
   function payCreditCardBill(){
     if(!state) return;
     var amt = state.ccPayable;
@@ -1539,6 +1692,24 @@
     state.fixed = state.fixed.filter(function(x){return x.id!==id;});
     save(); render();
   }
+
+  document.getElementById('applyPnlRangeBtn').onclick = function(){
+    if(!state) return;
+    var from = document.getElementById('pnlFromInput').value;
+    var to = document.getElementById('pnlToInput').value;
+    if(!from || !to) return;
+    if(new Date(from) > new Date(to)) return;
+    state.statementFrom = from;
+    state.statementTo = to;
+    save(); render();
+  };
+
+  document.getElementById('resetPnlRangeBtn').onclick = function(){
+    if(!state) return;
+    state.statementFrom = null;
+    state.statementTo = null;
+    save(); render();
+  };
 
   document.getElementById('saveStatementConfigBtn').onclick = function(){
     if(!state) return;
@@ -1573,13 +1744,16 @@
 
       var pnlRows = [
         ['Income & Expenditure Account'],
-        ['For the period ' + state.cycleStart + ' to ' + today],
+        ['For the period ' + stmt.periodFrom + ' to ' + stmt.periodTo],
         [],
-        ['Income'],
-        ['Salary / income', stmt.income],
-        [],
-        ['Expenditure']
+        ['Income']
       ];
+      Object.keys(stmt.incomeBySource).sort().forEach(function(k){
+        pnlRows.push([k, stmt.incomeBySource[k]]);
+      });
+      pnlRows.push(['Total income', stmt.income]);
+      pnlRows.push([]);
+      pnlRows.push(['Expenditure']);
       Object.keys(stmt.expensesByCategory).sort().forEach(function(k){
         pnlRows.push([k, stmt.expensesByCategory[k]]);
       });
@@ -1600,6 +1774,8 @@
       });
       if(stmt.goalsTotal > 0) bsRows.push(['Investment (mutual fund)', stmt.goalsTotal]);
       if(stmt.receivablesTotal > 0) bsRows.push(['Loans and advances receivable', stmt.receivablesTotal]);
+      if(stmt.otherAssetsTotal > 0) bsRows.push(['Other assets (at cost)', stmt.otherAssetsTotal]);
+      if(stmt.incomeReceivablesTotal > 0) bsRows.push(['Accrued income receivable', stmt.incomeReceivablesTotal]);
       bsRows.push([state.asset.name + ' at cost', stmt.assetCost]);
       bsRows.push(['Less: accumulated depreciation', -stmt.accumulatedDep]);
       bsRows.push(['Net book value', stmt.netBookValue]);
@@ -1742,6 +1918,23 @@
     if(!isNaN(v) && v > 0){ state.monthlyIncome = v; save(); render(); }
   };
 
+  document.getElementById('addIncomeReceivableBtn').onclick = function(){
+    if(!state) return;
+    var source = document.getElementById('newIncomeReceivableSource').value.trim();
+    var amount = parseFloat(document.getElementById('newIncomeReceivableAmount').value);
+    var dateEarned = document.getElementById('newIncomeReceivableDate').value || new Date().toISOString().slice(0,10);
+    if(!source || isNaN(amount) || amount <= 0) return;
+    var irId = genId();
+    state.incomeReceivables.push({id:irId, source:source, balance:0, dateEarned:dateEarned});
+    var tx = {id:genId(), date:dateEarned, type:'income_accrual', category:source + ' (earned, pending)', categoryId:'income-receivable', incomeReceivableId:irId, incomeReceivableAction:'earned', amount:amount, source:'manual'};
+    applyForward(tx);
+    state.transactions.push(tx);
+    document.getElementById('newIncomeReceivableSource').value = '';
+    document.getElementById('newIncomeReceivableAmount').value = '';
+    document.getElementById('newIncomeReceivableDate').value = '';
+    save(); render();
+  };
+
   document.getElementById('logSalaryBtn').onclick = function(){
     if(!state) return;
     if(state.salaryReceivedThisCycle) return;
@@ -1751,6 +1944,20 @@
     state.salaryReceivedThisCycle = true;
     state.salaryReceivedDate = today;
     state.transactions.push(tx);
+    save(); render();
+  };
+
+  document.getElementById('addReserveBtn').onclick = function(){
+    if(!state) return;
+    var name = document.getElementById('newReserveName').value.trim();
+    var amt = parseFloat(document.getElementById('newReserveAmount').value);
+    if(!name || isNaN(amt) || amt <= 0) return;
+    var key = name.toLowerCase().replace(/\s+/g,'_');
+    var item = {id: 'f'+Date.now(), name: name, amount: amt, type: 'reserve', paid: false, reserveKey: key};
+    if(!(key in state.reserves)) state.reserves[key] = 0;
+    state.fixed.push(item);
+    document.getElementById('newReserveName').value = '';
+    document.getElementById('newReserveAmount').value = '';
     save(); render();
   };
 
@@ -1871,17 +2078,21 @@
     var date = document.getElementById('txDate').value || new Date().toISOString().slice(0,10);
     var type = document.getElementById('txType').value;
     var categoryId = document.getElementById('txCategorySelect').value;
+    var nature = document.getElementById('txNature').value;
     var note = document.getElementById('txNote').value.trim();
     var amount = parseFloat(document.getElementById('txAmount').value);
     var onCard = document.getElementById('txCreditCard').checked;
     if(isNaN(amount) || amount <= 0) return;
 
     var matchingItem = state.fixed.find(function(f){ return f.id === categoryId; });
-    var label = matchingItem ? matchingItem.name : (note || 'Other');
+    var label = matchingItem ? matchingItem.name : 'Other';
     if(note) label = label + ' — ' + note;
+    if(type==='expense' && nature==='asset') label = label + ' (asset)';
 
     var tx = {id:genId(), date:date, type:type, category:label, categoryId: matchingItem ? matchingItem.id : 'other', amount:amount, source:'manual'};
-    if(matchingItem && matchingItem.type==='reserve' && type==='expense'){
+    if(type==='expense' && nature==='asset'){
+      tx.nature = 'asset';
+    } else if(matchingItem && matchingItem.type==='reserve' && type==='expense'){
       tx.type = 'expense';
       tx.reserveKey = matchingItem.reserveKey;
     } else if(type==='expense' && onCard){
@@ -1893,6 +2104,7 @@
     document.getElementById('txNote').value = '';
     document.getElementById('txAmount').value = '';
     document.getElementById('txCreditCard').checked = false;
+    document.getElementById('txNature').value = 'expense';
     save(); render();
   };
 
