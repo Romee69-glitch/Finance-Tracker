@@ -68,6 +68,7 @@
   }
 </script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   .ledger {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -129,21 +130,23 @@
     </div>
   </div>
 
-  <div class="card" style="margin-bottom:1.25rem;">
+  <div style="display:flex;gap:4px;margin-bottom:1rem;border-bottom:1px solid var(--line);overflow-x:auto;" id="tabNav">
+    <button class="btn tab-btn" data-tab="today" style="font-size:13px;font-weight:500;padding:8px 14px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--ink-2);white-space:nowrap;">Today</button>
+    <button class="btn tab-btn" data-tab="budget" style="font-size:13px;font-weight:500;padding:8px 14px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--ink-2);white-space:nowrap;">Budget</button>
+    <button class="btn tab-btn" data-tab="history" style="font-size:13px;font-weight:500;padding:8px 14px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--ink-2);white-space:nowrap;">History</button>
+    <button class="btn tab-btn" data-tab="statements" style="font-size:13px;font-weight:500;padding:8px 14px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--ink-2);white-space:nowrap;">Statements</button>
+  </div>
+
+  <div class="tab-panel" data-tab="today">
+  <div class="card" style="margin-bottom:1rem;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <strong style="font-size:15px;">Credit card</strong>
-      <span style="font-size:12px;color:var(--ink-2);">Statement closes 10th · due 30th</span>
+      <strong style="font-size:15px;">Cash in hand</strong>
+      <span style="font-size:12px;color:var(--ink-2);">update whenever you check your actual balance</span>
     </div>
-    <div id="ccStatus" style="font-size:13px;margin-bottom:8px;"></div>
-    <div style="display:flex;gap:16px;align-items:center;">
-      <div>
-        <div style="font-size:11px;color:var(--ink-2);">Outstanding payable</div>
-        <div class="mono" id="ccPayableDisplay" style="font-size:18px;">—</div>
-      </div>
-      <button class="btn" id="payCcBtn" style="height:34px;padding:0 14px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:13px;">Pay credit card bill</button>
-      <button class="btn" id="resetCcBtn" style="height:34px;padding:0 12px;border:1px solid var(--line);border-radius:6px;background:transparent;font-size:12px;color:var(--ink-2);">Reset balance</button>
+    <div style="display:flex;gap:8px;">
+      <input type="number" id="cashInput" placeholder="Current cash in hand (PKR)" style="flex:1;height:36px;padding:0 10px;border:1px solid var(--line);border-radius:6px;">
+      <button class="btn" id="setCashBtn" style="height:36px;padding:0 16px;border:1px solid var(--line-2);border-radius:6px;background:transparent;">Set</button>
     </div>
-    <div style="font-size:11px;color:var(--ink-3);margin-top:6px;">Items tagged "credit card" accrue here when ticked — cash isn't deducted until you tap "Pay credit card bill."</div>
   </div>
 
   <div class="card" style="margin-bottom:1rem;">
@@ -163,6 +166,12 @@
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
       <strong style="font-size:15px;">Today's pace</strong>
       <span id="todayLabel" style="font-size:12px;color:var(--ink-2);"></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+      <label style="font-size:11px;color:var(--ink-3);">Cycle started</label>
+      <input type="date" id="cycleStartInput" style="height:26px;padding:0 6px;border:1px solid var(--line);border-radius:6px;font-size:12px;">
+      <button class="btn" id="saveCycleStartBtn" style="height:26px;padding:0 10px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:11px;color:var(--ink-2);">Save</button>
+      <span style="font-size:11px;color:var(--ink-3);">— backdate this if you're logging expenses from earlier in the cycle</span>
     </div>
     <div id="paceBanner" style="font-size:14px;padding:8px 12px;border-radius:6px;margin-bottom:10px;"></div>
     <div style="display:flex;gap:16px;margin-bottom:10px;">
@@ -190,13 +199,40 @@
 
   <div class="card" style="margin-bottom:1rem;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <strong style="font-size:15px;">Cash in hand</strong>
-      <span style="font-size:12px;color:var(--ink-2);">update whenever you check your actual balance</span>
+      <strong style="font-size:15px;">Log a transaction</strong>
     </div>
-    <div style="display:flex;gap:8px;">
-      <input type="number" id="cashInput" placeholder="Current cash in hand (PKR)" style="flex:1;height:36px;padding:0 10px;border:1px solid var(--line);border-radius:6px;">
-      <button class="btn" id="setCashBtn" style="height:36px;padding:0 16px;border:1px solid var(--line-2);border-radius:6px;background:transparent;">Set</button>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+      <input type="date" id="txDate" style="height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <select id="txType" style="height:34px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+        <option value="expense">Expense</option>
+        <option value="income">Income</option>
+      </select>
+      <select id="txCategorySelect" style="flex:1;min-width:140px;height:34px;border:1px solid var(--line);border-radius:6px;font-size:13px;"></select>
+      <input type="text" id="txNote" placeholder="Note (optional, e.g. mobile cover)" style="flex:1;min-width:140px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <input type="number" id="txAmount" placeholder="Amount" style="width:110px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-2);"><input type="checkbox" id="txCreditCard"> Charge to credit card</label>
+      <button class="btn" id="addTxBtn" style="height:34px;padding:0 14px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:13px;">Log</button>
     </div>
+    <div style="font-size:11px;color:var(--ink-3);margin-top:6px;">Pick the budget line this belongs to. Choose "Other / uncategorized" for one-off purchases (like a phone cover) that shouldn't count against a recurring budget. To pay an actual bill from a reserve fund (oil change, ACCA fee), select that reserve item here as an expense. Tick "Charge to credit card" if this is going on the card rather than paid from cash right now.</div>
+  </div>
+  </div>
+
+  <div class="tab-panel" data-tab="budget" style="display:none;">
+  <div class="card" style="margin-bottom:1.25rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <strong style="font-size:15px;">Credit card</strong>
+      <span style="font-size:12px;color:var(--ink-2);">Statement closes 10th · due 30th</span>
+    </div>
+    <div id="ccStatus" style="font-size:13px;margin-bottom:8px;"></div>
+    <div style="display:flex;gap:16px;align-items:center;">
+      <div>
+        <div style="font-size:11px;color:var(--ink-2);">Outstanding payable</div>
+        <div class="mono" id="ccPayableDisplay" style="font-size:18px;">—</div>
+      </div>
+      <button class="btn" id="payCcBtn" style="height:34px;padding:0 14px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:13px;">Pay credit card bill</button>
+      <button class="btn" id="resetCcBtn" style="height:34px;padding:0 12px;border:1px solid var(--line);border-radius:6px;background:transparent;font-size:12px;color:var(--ink-2);">Reset balance</button>
+    </div>
+    <div style="font-size:11px;color:var(--ink-3);margin-top:6px;">Items tagged "credit card" accrue here when ticked — cash isn't deducted until you tap "Pay credit card bill."</div>
   </div>
 
   <div class="card" style="margin-bottom:1rem;">
@@ -232,25 +268,46 @@
     </div>
   </div>
 
-  <div class="card" style="margin-bottom:1rem;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <strong style="font-size:15px;">Log a transaction</strong>
+  <div class="card" style="margin-top:1rem;">
+    <strong style="font-size:15px;">Savings goals</strong>
+    <div id="goalsList" style="margin-top:8px;"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+      <input type="text" id="newGoalName" placeholder="Goal name (e.g. iPhone 19 Pro fund)" style="flex:1;min-width:160px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <input type="number" id="newGoalMonthly" placeholder="Monthly contribution" style="width:140px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <input type="date" id="newGoalDate" style="height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <button class="btn" id="addGoalBtn" style="height:34px;padding:0 14px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:13px;">Add goal</button>
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;">
-      <input type="date" id="txDate" style="height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
-      <select id="txType" style="height:34px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
-        <option value="expense">Expense</option>
-        <option value="income">Income</option>
-      </select>
-      <select id="txCategorySelect" style="flex:1;min-width:140px;height:34px;border:1px solid var(--line);border-radius:6px;font-size:13px;"></select>
-      <input type="text" id="txNote" placeholder="Note (optional, e.g. mobile cover)" style="flex:1;min-width:140px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
-      <input type="number" id="txAmount" placeholder="Amount" style="width:110px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
-      <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-2);"><input type="checkbox" id="txCreditCard"> Charge to credit card</label>
-      <button class="btn" id="addTxBtn" style="height:34px;padding:0 14px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:13px;">Log</button>
-    </div>
-    <div style="font-size:11px;color:var(--ink-3);margin-top:6px;">Pick the budget line this belongs to. Choose "Other / uncategorized" for one-off purchases (like a phone cover) that shouldn't count against a recurring budget. To pay an actual bill from a reserve fund (oil change, ACCA fee), select that reserve item here as an expense. Tick "Charge to credit card" if this is going on the card rather than paid from cash right now.</div>
+    <div style="font-size:11px;color:var(--ink-3);margin-top:6px;">Creates a matching monthly expense line in "This month's fixed items" — tick it (or log it) each time you actually transfer the contribution, and this card tracks your running total across all months, unaffected by "Start new month."</div>
   </div>
 
+  <div class="card" style="margin-top:1rem;">
+    <strong style="font-size:15px;">Loans and advances (given to others)</strong>
+    <div id="receivablesList" style="margin-top:8px;"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+      <input type="text" id="newReceivableName" placeholder="Person's name" style="flex:1;min-width:120px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <input type="number" id="newReceivableAmount" placeholder="Amount given" style="width:130px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <input type="date" id="newReceivableDate" style="height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <input type="date" id="newReceivableDueDate" style="height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;" title="Expected return date (optional)">
+      <button class="btn" id="addReceivableBtn" style="height:34px;padding:0 14px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:13px;">Log loan given</button>
+    </div>
+    <div style="font-size:11px;color:var(--ink-3);margin-top:6px;">Deducts cash immediately (like a real transfer) but never counts as an expense — it shows as a receivable asset on your Financial Position instead. Repayments add cash back without counting as income.</div>
+  </div>
+
+  <div class="card" style="margin-top:1rem;">
+    <strong style="font-size:15px;">Loans and advances (taken from others)</strong>
+    <div id="payablesList" style="margin-top:8px;"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+      <input type="text" id="newPayableName" placeholder="Person's name" style="flex:1;min-width:120px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <input type="number" id="newPayableAmount" placeholder="Amount taken" style="width:130px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <input type="date" id="newPayableDate" style="height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      <input type="date" id="newPayableDueDate" style="height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;" title="Expected repayment date (optional)">
+      <button class="btn" id="addPayableBtn" style="height:34px;padding:0 14px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:13px;">Log loan taken</button>
+    </div>
+    <div style="font-size:11px;color:var(--ink-3);margin-top:6px;">Adds cash immediately but never counts as income — it shows as a payable liability on your Financial Position instead. Repayments reduce cash without counting as an expense.</div>
+  </div>
+  </div>
+
+  <div class="tab-panel" data-tab="history" style="display:none;">
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <strong style="font-size:15px;">Recent transactions</strong>
@@ -265,17 +322,70 @@
     <strong style="font-size:15px;">History</strong>
     <div id="historyList" style="margin-top:8px;"></div>
   </div>
+  </div>
 
+  <div class="tab-panel" data-tab="statements" style="display:none;">
   <div class="card" style="margin-top:1rem;">
-    <strong style="font-size:15px;">Savings goals</strong>
-    <div id="goalsList" style="margin-top:8px;"></div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
-      <input type="text" id="newGoalName" placeholder="Goal name (e.g. iPhone 19 Pro fund)" style="flex:1;min-width:160px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
-      <input type="number" id="newGoalMonthly" placeholder="Monthly contribution" style="width:140px;height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
-      <input type="date" id="newGoalDate" style="height:34px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
-      <button class="btn" id="addGoalBtn" style="height:34px;padding:0 14px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:13px;">Add goal</button>
+    <strong style="font-size:15px;">Financial statements</strong>
+    <div style="font-size:11px;color:var(--ink-3);margin:4px 0 10px;">Configure your loan and asset details once, then export month-end statements anytime.</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:10px;">
+      <div>
+        <div style="font-size:12px;font-weight:600;margin-bottom:6px;">iPhone EMI loan</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;gap:6px;align-items:center;">
+            <label style="font-size:11px;color:var(--ink-3);width:70px;">Principal</label>
+            <input type="number" id="loanPrincipalInput" style="flex:1;height:28px;font-size:12px;padding:0 6px;border:1px solid var(--line);border-radius:6px;">
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <label style="font-size:11px;color:var(--ink-3);width:70px;">APR %</label>
+            <input type="number" id="loanAprInput" style="flex:1;height:28px;font-size:12px;padding:0 6px;border:1px solid var(--line);border-radius:6px;">
+          </div>
+          <div style="font-size:11px;color:var(--ink-3);">Payments made: <span id="loanPaymentsMadeDisplay"></span> (auto-tracked)</div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:600;margin-bottom:6px;">iPhone asset</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;gap:6px;align-items:center;">
+            <label style="font-size:11px;color:var(--ink-3);width:70px;">Cost</label>
+            <input type="number" id="assetCostInput" style="flex:1;height:28px;font-size:12px;padding:0 6px;border:1px solid var(--line);border-radius:6px;">
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <label style="font-size:11px;color:var(--ink-3);width:70px;">Purchased</label>
+            <input type="date" id="assetPurchaseDateInput" style="flex:1;height:28px;font-size:12px;padding:0 6px;border:1px solid var(--line);border-radius:6px;">
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <label style="font-size:11px;color:var(--ink-3);width:70px;">Method</label>
+            <select id="assetMethodInput" style="flex:1;height:28px;font-size:12px;border:1px solid var(--line);border-radius:6px;">
+              <option value="reducing_balance">Reducing balance</option>
+              <option value="straight_line">Straight-line</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;" id="assetRateRow">
+            <label style="font-size:11px;color:var(--ink-3);width:70px;">Rate %/yr</label>
+            <input type="number" id="assetRateInput" style="flex:1;height:28px;font-size:12px;padding:0 6px;border:1px solid var(--line);border-radius:6px;">
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;" id="assetLifeRow">
+            <label style="font-size:11px;color:var(--ink-3);width:70px;">Life (mo.)</label>
+            <input type="number" id="assetLifeInput" style="flex:1;height:28px;font-size:12px;padding:0 6px;border:1px solid var(--line);border-radius:6px;">
+          </div>
+        </div>
+      </div>
     </div>
-    <div style="font-size:11px;color:var(--ink-3);margin-top:6px;">Creates a matching monthly expense line in "This month's fixed items" — tick it (or log it) each time you actually transfer the contribution, and this card tracks your running total across all months, unaffected by "Start new month."</div>
+    <button class="btn" id="saveStatementConfigBtn" style="height:30px;padding:0 12px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:12px;margin-bottom:14px;">Save details</button>
+
+    <div style="border-top:1px solid var(--line);padding-top:12px;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px;">Income &amp; Expenditure Account — cycle to date</div>
+      <div id="pnlPreview" class="mono" style="font-size:12.5px;line-height:1.8;"></div>
+
+      <div style="font-size:13px;font-weight:600;margin:14px 0 6px;">Statement of Financial Position — as at today</div>
+      <div id="bsPreview" class="mono" style="font-size:12.5px;line-height:1.8;"></div>
+    </div>
+
+    <button class="btn" id="exportStatementsBtn" style="height:34px;padding:0 16px;border:1px solid var(--line-2);border-radius:6px;background:transparent;font-size:13px;margin-top:12px;">Export to Excel</button>
+    <span id="exportStatus" style="font-size:11px;color:var(--ink-3);margin-left:8px;"></span>
+  </div>
   </div>
 
 </div>
@@ -304,12 +414,17 @@
     ],
     history: [],
     goals: [],
+    receivables: [],
+    payables: [],
     salaryReceivedThisCycle: false,
     salaryReceivedDate: null,
     transactions: [],
     cycleStart: new Date().toISOString().slice(0,10),
     cycleLengthDays: 30,
     theme: 'minimal',
+    activeTab: 'today',
+    loan: {name:'iPhone EMI', principal:250000, aprPercent:29, paymentsMade:0, linkedItemId:'emi'},
+    asset: {name:'iPhone', cost:490000, usefulLifeMonths:24, purchaseDate:null, depreciationMethod:'reducing_balance', depreciationRate:25},
     monthLabel: new Date().toLocaleString('default',{month:'long',year:'numeric'})
   };
 
@@ -339,6 +454,20 @@
     } else if(t.type === 'accrual'){
       if(!t.settled){ state.ccPayable += Number(t.amount); }
     }
+    if(t.receivableId){
+      var r = state.receivables.find(function(x){ return x.id === t.receivableId; });
+      if(r){
+        if(t.receivableAction === 'given') r.balance += Number(t.amount);
+        else if(t.receivableAction === 'repayment') r.balance -= Number(t.amount);
+      }
+    }
+    if(t.payableId){
+      var p = state.payables.find(function(x){ return x.id === t.payableId; });
+      if(p){
+        if(t.payableAction === 'taken') p.balance += Number(t.amount);
+        else if(t.payableAction === 'repayment') p.balance -= Number(t.amount);
+      }
+    }
   }
 
   function applyReverse(t){
@@ -353,6 +482,20 @@
     } else if(t.type === 'accrual'){
       if(!t.settled){ state.ccPayable -= Number(t.amount); }
     }
+    if(t.receivableId){
+      var r = state.receivables.find(function(x){ return x.id === t.receivableId; });
+      if(r){
+        if(t.receivableAction === 'given') r.balance -= Number(t.amount);
+        else if(t.receivableAction === 'repayment') r.balance += Number(t.amount);
+      }
+    }
+    if(t.payableId){
+      var p = state.payables.find(function(x){ return x.id === t.payableId; });
+      if(p){
+        if(t.payableAction === 'taken') p.balance -= Number(t.amount);
+        else if(t.payableAction === 'repayment') p.balance += Number(t.amount);
+      }
+    }
   }
 
   async function load(){
@@ -365,11 +508,18 @@
     if(!state.cycleStart) state.cycleStart = new Date().toISOString().slice(0,10);
     if(!state.cycleLengthDays) state.cycleLengthDays = 30;
     if(!state.theme) state.theme = 'minimal';
+    if(!state.activeTab) state.activeTab = 'today';
+    if(!state.loan) state.loan = {name:'iPhone EMI', principal:252500, aprPercent:29, paymentsMade:0, linkedItemId:'emi'};
+    if(!state.asset) state.asset = {name:'iPhone', cost:252500, usefulLifeMonths:24, purchaseDate:null, depreciationMethod:'reducing_balance', depreciationRate:25};
+    if(!state.asset.depreciationMethod) state.asset.depreciationMethod = 'straight_line';
+    if(!state.asset.depreciationRate) state.asset.depreciationRate = 25;
     if(!state.deadlines){
       state.deadlines = [{id:'acca-deadline', name:'ACCA fee', date: state.accaDeadline || '2026-07-27', targetAmount: state.accaFeeAmount || 82500, reserveKey:'acca'}];
     }
     if(!state.history) state.history = [];
     if(!state.goals) state.goals = [];
+    if(!state.receivables) state.receivables = [];
+    if(!state.payables) state.payables = [];
     if(state.ccPayable === undefined) state.ccPayable = 0;
     if(!state.ccStatementDay) state.ccStatementDay = 10;
     if(!state.ccDueDay) state.ccDueDay = 30;
@@ -496,6 +646,15 @@
     var tBtn = document.getElementById('themeToggle');
     if(tBtn) tBtn.textContent = state.theme === 'dark' ? 'Light' : 'Dark';
     try { document.body.style.background = state.theme === 'dark' ? '#16181D' : '#FFFFFF'; } catch(e){}
+
+    document.querySelectorAll('.tab-panel').forEach(function(panel){
+      panel.style.display = panel.getAttribute('data-tab') === state.activeTab ? '' : 'none';
+    });
+    document.querySelectorAll('.tab-btn').forEach(function(btn){
+      var active = btn.getAttribute('data-tab') === state.activeTab;
+      btn.style.color = active ? 'var(--ink)' : 'var(--ink-2)';
+      btn.style.borderBottomColor = active ? 'var(--ink)' : 'transparent';
+    });
   }
 
   function computeAlerts(insights){
@@ -583,6 +742,100 @@
     return alerts;
   }
 
+  function buildLoanSchedule(){
+    var emiTxs = state.transactions.filter(function(t){
+      return (t.type==='expense' || t.type==='accrual') && t.categoryId === state.loan.linkedItemId;
+    });
+    emiTxs.sort(function(a,b){ return new Date(a.date) - new Date(b.date); });
+    var balance = Number(state.loan.principal);
+    var monthlyRate = Number(state.loan.aprPercent) / 100 / 12;
+    var entries = [];
+    emiTxs.forEach(function(t){
+      var interest = Math.max(0, balance * monthlyRate);
+      var principal = Number(t.amount) - interest;
+      balance -= principal;
+      entries.push({txId: t.id, date: t.date, interest: interest, principal: principal, balanceAfter: balance});
+    });
+    return {balance: Math.max(0, Math.round(balance)), entries: entries};
+  }
+
+  function computeLoanBalance(){
+    return buildLoanSchedule().balance;
+  }
+
+  function computeDepreciation(){
+    var cost = Number(state.asset.cost);
+    if(!state.asset.purchaseDate){
+      return {cost: cost, accumulated: 0, netBookValue: cost};
+    }
+    var purchase = new Date(state.asset.purchaseDate);
+    var now = new Date();
+    var monthsElapsed = Math.max(0, (now.getFullYear()-purchase.getFullYear())*12 + (now.getMonth()-purchase.getMonth()) + (now.getDate() >= purchase.getDate() ? 0 : -1));
+    var netBookValue;
+    if(state.asset.depreciationMethod === 'reducing_balance'){
+      var annualRate = Number(state.asset.depreciationRate) / 100;
+      var monthlyRate = 1 - Math.pow(1 - annualRate, 1/12);
+      netBookValue = cost * Math.pow(1 - monthlyRate, monthsElapsed);
+    } else {
+      var lifeMonths = Number(state.asset.usefulLifeMonths) || 1;
+      var monthlyDep = cost / lifeMonths;
+      netBookValue = Math.max(0, cost - monthlyDep * monthsElapsed);
+    }
+    netBookValue = Math.round(netBookValue);
+    var accumulated = cost - netBookValue;
+    return {cost: cost, accumulated: accumulated, netBookValue: netBookValue};
+  }
+
+  function computeStatements(){
+    var cycleTxns = state.transactions.filter(function(t){ return new Date(t.date) >= new Date(state.cycleStart); });
+    var goalItemIds = state.goals.map(function(g){ return g.fixedItemId; });
+    var schedule = buildLoanSchedule();
+    var scheduleByTxId = {};
+    schedule.entries.forEach(function(e){ scheduleByTxId[e.txId] = e; });
+
+    var income = cycleTxns.filter(function(t){ return t.type==='income' && !t.receivableId && !t.payableId; })
+      .reduce(function(s,t){ return s+Number(t.amount); }, 0);
+
+    var expenseTxns = cycleTxns.filter(function(t){
+      return (t.type==='expense' || t.type==='accrual') && t.categoryId !== 'cc-payment' && goalItemIds.indexOf(t.categoryId) === -1 && !t.receivableId && !t.payableId;
+    });
+    var expensesByCategory = {};
+    var totalExpense = 0;
+    expenseTxns.forEach(function(t){
+      if(t.categoryId === state.loan.linkedItemId){
+        var entry = scheduleByTxId[t.id];
+        var interestPortion = entry ? Math.round(entry.interest) : 0;
+        expensesByCategory['Interest expense — ' + state.loan.name] = (expensesByCategory['Interest expense — ' + state.loan.name] || 0) + interestPortion;
+        totalExpense += interestPortion;
+      } else {
+        var key = t.category.replace(/ \(credit card\)| \(reserve\)/g, '');
+        expensesByCategory[key] = (expensesByCategory[key] || 0) + Number(t.amount);
+        totalExpense += Number(t.amount);
+      }
+    });
+    var surplus = income - totalExpense;
+
+    var totalReserved = Object.values(state.reserves).reduce(function(s,v){return s+v;},0);
+    var unrestrictedCash = state.cashInHand - totalReserved;
+    var goalsTotal = state.goals.reduce(function(s,g){
+      return s + state.transactions.filter(function(t){ return (t.type==='expense'||t.type==='accrual') && t.categoryId===g.fixedItemId; }).reduce(function(ss,t){ return ss+Number(t.amount); }, 0);
+    }, 0);
+    var dep = computeDepreciation();
+    var loanBalance = computeLoanBalance();
+    var receivablesTotal = state.receivables.reduce(function(s,r){ return s + Math.max(0, r.balance); }, 0);
+    var payablesTotal = state.payables.reduce(function(s,p){ return s + Math.max(0, p.balance); }, 0);
+    var totalAssets = unrestrictedCash + totalReserved + goalsTotal + dep.netBookValue + receivablesTotal;
+    var totalLiabilities = state.ccPayable + loanBalance + payablesTotal;
+    var netPosition = totalAssets - totalLiabilities;
+
+    return {
+      income: income, expensesByCategory: expensesByCategory, totalExpense: totalExpense, surplus: surplus,
+      unrestrictedCash: unrestrictedCash, totalReserved: totalReserved, reserves: state.reserves, goalsTotal: goalsTotal,
+      assetCost: dep.cost, accumulatedDep: dep.accumulated, netBookValue: dep.netBookValue, receivablesTotal: receivablesTotal,
+      ccPayable: state.ccPayable, loanBalance: loanBalance, payablesTotal: payablesTotal, totalAssets: totalAssets, totalLiabilities: totalLiabilities, netPosition: netPosition
+    };
+  }
+
   function render(){
     applyTheme();
     document.getElementById('monthLabel').textContent = state.monthLabel;
@@ -594,6 +847,7 @@
     var insights = categoryInsights();
 
     document.getElementById('todayLabel').textContent = 'Day ' + (daysElapsed()+1) + ' of ' + state.cycleLengthDays + ((daysElapsed()+1) > state.cycleLengthDays ? ' — tap "Start new month" below' : '');
+    document.getElementById('cycleStartInput').value = state.cycleStart;
     var spentToday = todaySpend();
     var spentCycle = state.transactions.filter(function(t){
       return (t.type==='expense' || t.type==='accrual') && t.categoryId !== 'cc-payment' && new Date(t.date) >= new Date(state.cycleStart);
@@ -966,6 +1220,145 @@
       gl.appendChild(block);
     });
 
+    var rvl = document.getElementById('receivablesList');
+    rvl.innerHTML = '';
+    if(state.receivables.length === 0){
+      var noRv = document.createElement('div');
+      noRv.style.fontSize='13px'; noRv.style.color='var(--ink-3)';
+      noRv.textContent = 'No loans or advances given yet.';
+      rvl.appendChild(noRv);
+    }
+    state.receivables.forEach(function(r){
+      var block = document.createElement('div');
+      block.style.padding='8px 0'; block.style.borderBottom='1px solid var(--line)';
+      var head = document.createElement('div');
+      head.style.display='flex'; head.style.justifyContent='space-between'; head.style.alignItems='center';
+      var label = document.createElement('span'); label.style.fontSize='14px'; label.style.fontWeight='600'; label.textContent = r.personName;
+      var delBtn = document.createElement('button'); delBtn.textContent = 'Remove';
+      delBtn.style.cssText = 'cursor:pointer;font-size:11px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink-2);';
+      delBtn.onclick = function(){
+        state.receivables = state.receivables.filter(function(x){return x.id!==r.id;});
+        save(); render();
+      };
+      head.appendChild(label); head.appendChild(delBtn);
+      var balLine = document.createElement('div');
+      balLine.className='mono'; balLine.style.fontSize='16px'; balLine.style.margin='4px 0';
+      balLine.textContent = fmt(r.balance) + (r.balance <= 0 ? ' — fully repaid' : ' outstanding');
+      var subLine = document.createElement('div');
+      subLine.style.fontSize='12px'; subLine.style.color='var(--ink-2)';
+      subLine.textContent = 'Given ' + r.dateGiven + (r.dueDate ? ' · expected back ' + r.dueDate : '');
+      block.appendChild(head); block.appendChild(balLine); block.appendChild(subLine);
+      if(r.balance > 0){
+        var repayRow = document.createElement('div');
+        repayRow.style.cssText = 'display:flex;gap:6px;margin-top:6px;';
+        var repayInput = document.createElement('input');
+        repayInput.type = 'number'; repayInput.placeholder = 'Repayment amount';
+        repayInput.style.cssText = 'flex:1;height:28px;font-size:12px;padding:0 6px;border:1px solid var(--line);border-radius:6px;';
+        var repayBtn = document.createElement('button'); repayBtn.textContent = 'Log repayment';
+        repayBtn.style.cssText = 'cursor:pointer;font-size:11px;padding:0 10px;border:1px solid var(--line-2);border-radius:6px;background:transparent;color:var(--ink);';
+        repayBtn.onclick = function(){ logReceivableRepayment(r.id, repayInput.value); };
+        repayRow.appendChild(repayInput); repayRow.appendChild(repayBtn);
+        block.appendChild(repayRow);
+      }
+      rvl.appendChild(block);
+    });
+
+    var pyl = document.getElementById('payablesList');
+    pyl.innerHTML = '';
+    if(state.payables.length === 0){
+      var noPy = document.createElement('div');
+      noPy.style.fontSize='13px'; noPy.style.color='var(--ink-3)';
+      noPy.textContent = 'No loans or advances taken yet.';
+      pyl.appendChild(noPy);
+    }
+    state.payables.forEach(function(p){
+      var block = document.createElement('div');
+      block.style.padding='8px 0'; block.style.borderBottom='1px solid var(--line)';
+      var head = document.createElement('div');
+      head.style.display='flex'; head.style.justifyContent='space-between'; head.style.alignItems='center';
+      var label = document.createElement('span'); label.style.fontSize='14px'; label.style.fontWeight='600'; label.textContent = p.personName;
+      var delBtn = document.createElement('button'); delBtn.textContent = 'Remove';
+      delBtn.style.cssText = 'cursor:pointer;font-size:11px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink-2);';
+      delBtn.onclick = function(){
+        state.payables = state.payables.filter(function(x){return x.id!==p.id;});
+        save(); render();
+      };
+      head.appendChild(label); head.appendChild(delBtn);
+      var balLine = document.createElement('div');
+      balLine.className='mono'; balLine.style.fontSize='16px'; balLine.style.margin='4px 0';
+      balLine.textContent = fmt(p.balance) + (p.balance <= 0 ? ' — fully repaid' : ' owed');
+      var subLine = document.createElement('div');
+      subLine.style.fontSize='12px'; subLine.style.color='var(--ink-2)';
+      subLine.textContent = 'Taken ' + p.dateTaken + (p.dueDate ? ' · expected repayment ' + p.dueDate : '');
+      block.appendChild(head); block.appendChild(balLine); block.appendChild(subLine);
+      if(p.balance > 0){
+        var repayRow = document.createElement('div');
+        repayRow.style.cssText = 'display:flex;gap:6px;margin-top:6px;';
+        var repayInput = document.createElement('input');
+        repayInput.type = 'number'; repayInput.placeholder = 'Repayment amount';
+        repayInput.style.cssText = 'flex:1;height:28px;font-size:12px;padding:0 6px;border:1px solid var(--line);border-radius:6px;';
+        var repayBtn = document.createElement('button'); repayBtn.textContent = 'Log repayment';
+        repayBtn.style.cssText = 'cursor:pointer;font-size:11px;padding:0 10px;border:1px solid var(--line-2);border-radius:6px;background:transparent;color:var(--ink);';
+        repayBtn.onclick = function(){ logPayableRepayment(p.id, repayInput.value); };
+        repayRow.appendChild(repayInput); repayRow.appendChild(repayBtn);
+        block.appendChild(repayRow);
+      }
+      pyl.appendChild(block);
+    });
+
+    document.getElementById('loanPrincipalInput').value = state.loan.principal;
+    document.getElementById('loanAprInput').value = state.loan.aprPercent;
+    document.getElementById('loanPaymentsMadeDisplay').textContent = state.loan.paymentsMade;
+    document.getElementById('assetCostInput').value = state.asset.cost;
+    document.getElementById('assetPurchaseDateInput').value = state.asset.purchaseDate || '';
+    document.getElementById('assetLifeInput').value = state.asset.usefulLifeMonths;
+    document.getElementById('assetMethodInput').value = state.asset.depreciationMethod;
+    document.getElementById('assetRateInput').value = state.asset.depreciationRate;
+    document.getElementById('assetRateRow').style.display = state.asset.depreciationMethod === 'reducing_balance' ? 'flex' : 'none';
+    document.getElementById('assetLifeRow').style.display = state.asset.depreciationMethod === 'straight_line' ? 'flex' : 'none';
+
+    var stmt = computeStatements();
+    var pnlEl = document.getElementById('pnlPreview');
+    var pnlLines = ['Income'];
+    pnlLines.push('  Salary / income'.padEnd(30) + fmt(stmt.income).padStart(14));
+    pnlLines.push('');
+    pnlLines.push('Expenditure');
+    Object.keys(stmt.expensesByCategory).sort().forEach(function(k){
+      pnlLines.push(('  ' + k).padEnd(30) + fmt(stmt.expensesByCategory[k]).padStart(14));
+    });
+    pnlLines.push('  '.padEnd(30) + '—'.padStart(14));
+    pnlLines.push('  Total expenditure'.padEnd(30) + fmt(stmt.totalExpense).padStart(14));
+    pnlLines.push('');
+    pnlLines.push((stmt.surplus >= 0 ? 'Surplus for the period' : 'Deficit for the period').padEnd(30) + fmt(stmt.surplus).padStart(14));
+    pnlEl.style.whiteSpace = 'pre';
+    pnlEl.textContent = pnlLines.join('\n');
+
+    var bsEl = document.getElementById('bsPreview');
+    var bsLines = ['Assets'];
+    bsLines.push('  Cash (unrestricted)'.padEnd(30) + fmt(stmt.unrestrictedCash).padStart(14));
+    Object.keys(stmt.reserves).forEach(function(k){
+      var label = state.fixed.find(function(f){return f.reserveKey===k;});
+      bsLines.push(('  Restricted: ' + (label?label.name:k)).padEnd(30) + fmt(stmt.reserves[k]).padStart(14));
+    });
+    if(stmt.goalsTotal > 0) bsLines.push('  Investment (mutual fund)'.padEnd(30) + fmt(stmt.goalsTotal).padStart(14));
+    if(stmt.receivablesTotal > 0) bsLines.push('  Loans and advances receivable'.padEnd(30) + fmt(stmt.receivablesTotal).padStart(14));
+    bsLines.push('  ' + state.asset.name + ' at cost'.padEnd(30) + fmt(stmt.assetCost).padStart(14));
+    bsLines.push('  Less: accumulated depreciation'.padEnd(30) + ('(' + fmt(stmt.accumulatedDep).replace('-','') + ')').padStart(14));
+    bsLines.push('  Net book value'.padEnd(30) + fmt(stmt.netBookValue).padStart(14));
+    bsLines.push('  '.padEnd(30) + '—'.padStart(14));
+    bsLines.push('  Total assets'.padEnd(30) + fmt(stmt.totalAssets).padStart(14));
+    bsLines.push('');
+    bsLines.push('Liabilities');
+    bsLines.push('  Credit card payable'.padEnd(30) + fmt(stmt.ccPayable).padStart(14));
+    bsLines.push('  ' + state.loan.name + ' payable'.padEnd(30) + fmt(stmt.loanBalance).padStart(14));
+    if(stmt.payablesTotal > 0) bsLines.push('  Loans and advances payable'.padEnd(30) + fmt(stmt.payablesTotal).padStart(14));
+    bsLines.push('  '.padEnd(30) + '—'.padStart(14));
+    bsLines.push('  Total liabilities'.padEnd(30) + fmt(stmt.totalLiabilities).padStart(14));
+    bsLines.push('');
+    bsLines.push('Net position'.padEnd(30) + fmt(stmt.netPosition).padStart(14));
+    bsEl.style.whiteSpace = 'pre';
+    bsEl.textContent = bsLines.join('\n');
+
     var hl = document.getElementById('historyList');
     hl.innerHTML = '';
     if(state.history.length === 0){
@@ -1005,6 +1398,7 @@
       }
       if(tx){ applyForward(tx); state.transactions.push(tx); f.lastTxId = tx.id; }
       f.paid = true;
+      if(f.id === state.loan.linkedItemId){ state.loan.paymentsMade += 1; }
     } else if(!checked && f.paid){
       var existingIndex = f.lastTxId ? state.transactions.findIndex(function(t){ return t.id === f.lastTxId; }) : -1;
       if(existingIndex > -1){
@@ -1022,6 +1416,7 @@
       }
       f.paid = false;
       f.lastTxId = null;
+      if(f.id === state.loan.linkedItemId){ state.loan.paymentsMade = Math.max(0, state.loan.paymentsMade - 1); }
     }
     save(); render();
   }
@@ -1105,6 +1500,30 @@
     return ccDueDateForCharge(earliest.date);
   }
 
+  function logReceivableRepayment(receivableId, amountRaw){
+    if(!state) return;
+    var amount = parseFloat(amountRaw);
+    if(isNaN(amount) || amount <= 0) return;
+    var r = state.receivables.find(function(x){ return x.id === receivableId; });
+    if(!r) return;
+    var tx = {id:genId(), date:new Date().toISOString().slice(0,10), type:'income', category:'Repayment from ' + r.personName, categoryId:'receivable', receivableId:receivableId, receivableAction:'repayment', amount:amount, source:'manual'};
+    applyForward(tx);
+    state.transactions.push(tx);
+    save(); render();
+  }
+
+  function logPayableRepayment(payableId, amountRaw){
+    if(!state) return;
+    var amount = parseFloat(amountRaw);
+    if(isNaN(amount) || amount <= 0) return;
+    var p = state.payables.find(function(x){ return x.id === payableId; });
+    if(!p) return;
+    var tx = {id:genId(), date:new Date().toISOString().slice(0,10), type:'expense', category:'Repayment to ' + p.personName, categoryId:'payable', payableId:payableId, payableAction:'repayment', amount:amount, source:'manual'};
+    applyForward(tx);
+    state.transactions.push(tx);
+    save(); render();
+  }
+
   function payCreditCardBill(){
     if(!state) return;
     var amt = state.ccPayable;
@@ -1120,6 +1539,113 @@
     state.fixed = state.fixed.filter(function(x){return x.id!==id;});
     save(); render();
   }
+
+  document.getElementById('saveStatementConfigBtn').onclick = function(){
+    if(!state) return;
+    var p = parseFloat(document.getElementById('loanPrincipalInput').value);
+    var apr = parseFloat(document.getElementById('loanAprInput').value);
+    var cost = parseFloat(document.getElementById('assetCostInput').value);
+    var pdate = document.getElementById('assetPurchaseDateInput').value;
+    var life = parseFloat(document.getElementById('assetLifeInput').value);
+    var method = document.getElementById('assetMethodInput').value;
+    var rate = parseFloat(document.getElementById('assetRateInput').value);
+    if(!isNaN(p) && p >= 0) state.loan.principal = p;
+    if(!isNaN(apr) && apr >= 0) state.loan.aprPercent = apr;
+    if(!isNaN(cost) && cost >= 0) state.asset.cost = cost;
+    if(pdate) state.asset.purchaseDate = pdate;
+    if(!isNaN(life) && life > 0) state.asset.usefulLifeMonths = life;
+    if(method) state.asset.depreciationMethod = method;
+    if(!isNaN(rate) && rate >= 0) state.asset.depreciationRate = rate;
+    save(); render();
+  };
+
+  document.getElementById('exportStatementsBtn').onclick = function(){
+    if(!state) return;
+    var statusEl = document.getElementById('exportStatus');
+    if(typeof XLSX === 'undefined'){
+      statusEl.textContent = 'Excel library failed to load — check your internet connection and try again.';
+      statusEl.style.color = 'var(--bad-tx)';
+      return;
+    }
+    try {
+      var stmt = computeStatements();
+      var today = new Date().toISOString().slice(0,10);
+
+      var pnlRows = [
+        ['Income & Expenditure Account'],
+        ['For the period ' + state.cycleStart + ' to ' + today],
+        [],
+        ['Income'],
+        ['Salary / income', stmt.income],
+        [],
+        ['Expenditure']
+      ];
+      Object.keys(stmt.expensesByCategory).sort().forEach(function(k){
+        pnlRows.push([k, stmt.expensesByCategory[k]]);
+      });
+      pnlRows.push(['Total expenditure', stmt.totalExpense]);
+      pnlRows.push([]);
+      pnlRows.push([stmt.surplus >= 0 ? 'Surplus for the period' : 'Deficit for the period', stmt.surplus]);
+
+      var bsRows = [
+        ['Statement of Financial Position'],
+        ['As at ' + today],
+        [],
+        ['Assets'],
+        ['Cash (unrestricted)', stmt.unrestrictedCash]
+      ];
+      Object.keys(stmt.reserves).forEach(function(k){
+        var label = state.fixed.find(function(f){return f.reserveKey===k;});
+        bsRows.push(['Restricted: ' + (label?label.name:k), stmt.reserves[k]]);
+      });
+      if(stmt.goalsTotal > 0) bsRows.push(['Investment (mutual fund)', stmt.goalsTotal]);
+      if(stmt.receivablesTotal > 0) bsRows.push(['Loans and advances receivable', stmt.receivablesTotal]);
+      bsRows.push([state.asset.name + ' at cost', stmt.assetCost]);
+      bsRows.push(['Less: accumulated depreciation', -stmt.accumulatedDep]);
+      bsRows.push(['Net book value', stmt.netBookValue]);
+      bsRows.push(['Total assets', stmt.totalAssets]);
+      bsRows.push([]);
+      bsRows.push(['Liabilities']);
+      bsRows.push(['Credit card payable', stmt.ccPayable]);
+      bsRows.push([state.loan.name + ' payable', stmt.loanBalance]);
+      if(stmt.payablesTotal > 0) bsRows.push(['Loans and advances payable', stmt.payablesTotal]);
+      bsRows.push(['Total liabilities', stmt.totalLiabilities]);
+      bsRows.push([]);
+      bsRows.push(['Net position', stmt.netPosition]);
+
+      var wb = XLSX.utils.book_new();
+      var wsPnl = XLSX.utils.aoa_to_sheet(pnlRows);
+      wsPnl['!cols'] = [{wch:30},{wch:16}];
+      var wsBs = XLSX.utils.aoa_to_sheet(bsRows);
+      wsBs['!cols'] = [{wch:30},{wch:16}];
+      XLSX.utils.book_append_sheet(wb, wsPnl, 'Income and Expenditure');
+      XLSX.utils.book_append_sheet(wb, wsBs, 'Financial Position');
+      XLSX.writeFile(wb, 'financial-statements-' + today + '.xlsx');
+      statusEl.textContent = 'Downloaded.';
+      statusEl.style.color = 'var(--ink-3)';
+    } catch(e){
+      console.error('export statements failed', e);
+      statusEl.textContent = 'Export failed — see console for details.';
+      statusEl.style.color = 'var(--bad-tx)';
+    }
+  };
+
+  document.getElementById('saveCycleStartBtn').onclick = function(){
+    if(!state) return;
+    var v = document.getElementById('cycleStartInput').value;
+    if(!v) return;
+    if(new Date(v) > new Date()){ return; }
+    state.cycleStart = v;
+    save(); render();
+  };
+
+  document.querySelectorAll('.tab-btn').forEach(function(btn){
+    btn.onclick = function(){
+      if(!state) return;
+      state.activeTab = btn.getAttribute('data-tab');
+      save(); render();
+    };
+  });
 
   document.getElementById('themeToggle').onclick = function(){
     if(!state) return;
@@ -1197,7 +1723,12 @@
     var accrualIds = state.transactions.filter(function(t){ return t.type==='accrual' && !t.settled; }).map(function(t){ return t.id; });
     state.transactions.forEach(function(t){ if(t.type==='accrual' && !t.settled){ applyReverse(t); } });
     state.transactions = state.transactions.filter(function(t){ return !(t.type === 'accrual' && !t.settled); });
-    state.fixed.forEach(function(f){ if(accrualIds.indexOf(f.lastTxId) > -1){ f.paid = false; f.lastTxId = null; } });
+    state.fixed.forEach(function(f){
+      if(accrualIds.indexOf(f.lastTxId) > -1){
+        f.paid = false; f.lastTxId = null;
+        if(f.id === state.loan.linkedItemId){ state.loan.paymentsMade = Math.max(0, state.loan.paymentsMade - 1); }
+      }
+    });
     state.ccPayable = 0;
     resetCcArmed = false;
     btn.textContent = 'Reset balance';
@@ -1234,6 +1765,44 @@
     document.getElementById('newDeadlineName').value = '';
     document.getElementById('newDeadlineDate').value = '';
     document.getElementById('newDeadlineAmount').value = '';
+    save(); render();
+  };
+
+  document.getElementById('addPayableBtn').onclick = function(){
+    if(!state) return;
+    var name = document.getElementById('newPayableName').value.trim();
+    var amount = parseFloat(document.getElementById('newPayableAmount').value);
+    var dateTaken = document.getElementById('newPayableDate').value || new Date().toISOString().slice(0,10);
+    var dueDate = document.getElementById('newPayableDueDate').value || null;
+    if(!name || isNaN(amount) || amount <= 0) return;
+    var pId = genId();
+    state.payables.push({id:pId, personName:name, balance:0, dateTaken:dateTaken, dueDate:dueDate});
+    var tx = {id:genId(), date:dateTaken, type:'income', category:'Loan taken from ' + name, categoryId:'payable', payableId:pId, payableAction:'taken', amount:amount, source:'manual'};
+    applyForward(tx);
+    state.transactions.push(tx);
+    document.getElementById('newPayableName').value = '';
+    document.getElementById('newPayableAmount').value = '';
+    document.getElementById('newPayableDate').value = '';
+    document.getElementById('newPayableDueDate').value = '';
+    save(); render();
+  };
+
+  document.getElementById('addReceivableBtn').onclick = function(){
+    if(!state) return;
+    var name = document.getElementById('newReceivableName').value.trim();
+    var amount = parseFloat(document.getElementById('newReceivableAmount').value);
+    var dateGiven = document.getElementById('newReceivableDate').value || new Date().toISOString().slice(0,10);
+    var dueDate = document.getElementById('newReceivableDueDate').value || null;
+    if(!name || isNaN(amount) || amount <= 0) return;
+    var rId = genId();
+    state.receivables.push({id:rId, personName:name, balance:0, dateGiven:dateGiven, dueDate:dueDate});
+    var tx = {id:genId(), date:dateGiven, type:'expense', category:'Loan given to ' + name, categoryId:'receivable', receivableId:rId, receivableAction:'given', amount:amount, source:'manual'};
+    applyForward(tx);
+    state.transactions.push(tx);
+    document.getElementById('newReceivableName').value = '';
+    document.getElementById('newReceivableAmount').value = '';
+    document.getElementById('newReceivableDate').value = '';
+    document.getElementById('newReceivableDueDate').value = '';
     save(); render();
   };
 
@@ -1287,6 +1856,7 @@
     state.transactions.forEach(function(t){ applyReverse(t); });
     state.transactions = [];
     state.ccPayable = 0;
+    state.loan.paymentsMade = 0;
     state.salaryReceivedThisCycle = false;
     state.salaryReceivedDate = null;
     state.fixed.forEach(function(f){ f.paid = false; f.lastTxId = null; });
