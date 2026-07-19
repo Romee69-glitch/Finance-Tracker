@@ -836,7 +836,10 @@
 
   function buildLoanSchedule(){
     var emiTxs = state.transactions.filter(function(t){
-      return (t.type==='expense' || t.type==='accrual') && t.categoryId === state.loan.linkedItemId;
+      if(t.categoryId !== state.loan.linkedItemId) return false;
+      if(t.type === 'expense') return true;
+      if(t.type === 'accrual') return !!t.settled;
+      return false;
     });
     emiTxs.sort(function(a,b){ return new Date(a.date) - new Date(b.date); });
     var balance = Number(state.loan.principal);
@@ -907,7 +910,8 @@
     expenseTxns.forEach(function(t){
       if(t.categoryId === state.loan.linkedItemId){
         var entry = scheduleByTxId[t.id];
-        var interestPortion = entry ? Math.round(entry.interest) : 0;
+        if(!entry) return;
+        var interestPortion = Math.round(entry.interest);
         expensesByCategory['Interest expense — ' + state.loan.name] = (expensesByCategory['Interest expense — ' + state.loan.name] || 0) + interestPortion;
         totalExpense += interestPortion;
       } else {
